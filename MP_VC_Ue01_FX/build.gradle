@@ -1,0 +1,30 @@
+plugins {
+	id 'java'
+	id 'eclipse'
+	id 'idea'
+}
+
+// character encoding
+tasks.withType(AbstractCompile)*.options*.encoding = "UTF-8"
+
+// Java version compliance
+sourceCompatibility = targetCompatibility = 1.8
+
+// where to get the dependencies
+repositories {
+    mavenCentral()
+}
+
+// dependencies
+dependencies {
+	compile fileTree('lib');			// all jars in the lib directory
+	testCompile 'junit:junit:4.+';		// jUnit for unit tests
+}
+
+/**
+ * creates the gradlew.bat and gradlew.sh file
+ */
+task wrapper(type: Wrapper) {
+    gradleVersion = "2.14";
+	distributionUrl = "https://services.gradle.org/distributions/gradle-2.14-all.zip";
+}
