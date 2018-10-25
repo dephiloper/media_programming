@@ -1,0 +1,5 @@
+// UML entity-relationship diagram for JAX-RS service unit tests
+// Render using http://yuml.me/diagram/plain/class/draw
+[ServiceTest| _-HTTP_CONTAINER:HttpServer; -wasteBasket:Long 0..*; | _+newWebTarget(alias:String password:String):WebTarget; +getWasteBasket():Long 0..*; ...];
+[PersonServiceTest| | +testFilterQueries(); +testRelations(); +testLifeCycle(); ...]-^[ServiceTest]
+[MessageServiceTest| | +testFilterQueries(); +testRelations(); +testLifeCycle(); ...]-^[ServiceTest]

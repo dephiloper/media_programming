@@ -1,0 +1,7 @@
+// UML entity-relationship diagram for JPA persistence unit tests
+// Render using http://yuml.me/diagram/plain/class/draw
+[EntityTest| -wasteBasket:Long 0..*; | +getEntityManagerFactory():EntityManagerFactory; +getEntityValidatorFactory():ValidatorFactory; +getWasteBasket():Long 0..*; ...];
+[MessageEntityTest| | +testConstraints(); +testLifeCycle(); ...]-^[EntityTest]
+[MessageEntityTest]-.-testLifeCycle()[note: em = this.getEntityManagerFactory().createEntityManager(); em.getTransaction().begin(); ... ; em.persist(entity); em.getTransaction().commit(); this.getWasteBasket().add(entity.getIdentity()); ...; em.close(); ]
+[PersonEntityTest| | +testConstraints(); +testLifeCycle(); ...]-^[EntityTest]
+[PersonEntityTest]-.-testConstraints()[note: validator = this.getEntityValidatorFactory().getValidator(); entity = new Person(); ...; constraintViolations = validator.validate(entity); ... ]
