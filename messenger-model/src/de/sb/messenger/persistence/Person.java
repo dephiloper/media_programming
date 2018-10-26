@@ -48,7 +48,7 @@ public class Person extends BaseEntity{
 	public Set<Person> peopleObserving;
 	
 	@Nullable
-	@OneToMany(mappedBy = "person", cascade = CascadeType.REMOVE)
+	@OneToMany(cascade = CascadeType.REMOVE)
 	public Set<Message> messagesAuthored;
 	
 	
