@@ -145,34 +145,36 @@ public class Person extends BaseEntity{
 	protected void setAddress(Address address) {
 		this.address = address;
 	}
-	
+
 	@Embeddable
 	public static class Group implements Comparable<Group>{
-	
+
 		private static final int ADMIN_ID = 0;
 		private static final int USER_ID = 1;
-		
+
 		public static final Group ADMIN = new Group(ADMIN_ID);
 		public static final Group USER = new Group(USER_ID);
-		
+
 		private int id;
-		
+
 		public Group(int id) {
 			this.id = id;
 		}
-		
+
+		public Group() {
+		}
+
 		private int getId() {
 			return this.id;
 		}
-		
-		@Override
+
 		public int compareTo(Group group) {
 			if (this.id == group.getId())
 				return 1;
 			return 0;
 		}
 	}
-	
+
 	@Embeddable
 	class Name implements Comparable<Name>{
 		
@@ -191,7 +193,6 @@ public class Person extends BaseEntity{
 			this.given = given;
 		}
 		
-		@Override
 		public int compareTo(Name arg0) {
 			// TODO Auto-generated method stub
 			return 0;
@@ -220,8 +221,10 @@ public class Person extends BaseEntity{
 			this.postcode = postcode;
 			this.city = city;
 		}
-		
-		@Override
+
+		Address() {
+		}
+
 		public int compareTo(Address arg0) {
 			// TODO Auto-generated method stub
 			return 0;

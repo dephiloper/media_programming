@@ -1,10 +1,10 @@
 package de.sb.messenger.persistence;
 
-import java.util.Set;
 import javax.persistence.*;
-import javax.validation.constraints.*;
-
-import de.sb.messenger.persistence.Message;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
+import java.util.Set;
 
 @Table(name = "BaseEntity", schema = "SBase")
 @Entity
@@ -80,10 +80,9 @@ public class BaseEntity implements Comparable<BaseEntity>{
 		return this.getClass().getName() + "@" + this.identity;
 	}
 
-	@Override
-	public int compareTo(BaseEntity base) {
-		if(this.getIdentity()==base.getIdentity())
+	public int compareTo(BaseEntity baseEntity) {
+		if(this.getIdentity()==baseEntity.getIdentity())
 			return 1;
-		return 0;	
+		return 0;
 	}
 }

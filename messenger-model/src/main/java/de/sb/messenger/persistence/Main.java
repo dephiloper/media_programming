@@ -20,8 +20,8 @@ public class Main {
 		final MysqlDataSource dataSource = new MysqlDataSource();
 		dataSource.setURL("jdbc:mysql://localhost:3306/messenger");
 		dataSource.setCharacterEncoding("utf-8");
-		dataSource.setUser("root");
-		dataSource.setPassword("root");
+		dataSource.setUser("phil");
+		dataSource.setPassword("phil");
 		Connection con = dataSource.getConnection();
 		ResultSet set = con.createStatement().executeQuery("Select * from BaseEntity");
 		while(set.next()) {
