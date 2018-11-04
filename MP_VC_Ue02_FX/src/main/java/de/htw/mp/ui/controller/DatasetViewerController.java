@@ -14,6 +14,7 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import de.htw.mp.model.FeatureContainer;
 
@@ -170,7 +171,16 @@ public class DatasetViewerController extends DatasetViewerBase {
      */
     @Override
     public float evaluate(FeatureContainer[] queries, FeatureContainer[] database, FeatureType featureType, int k) {
-        return 0;
+
+        AtomicInteger sum = new AtomicInteger(0);
+        Arrays.stream(database).parallel().forEach(query -> {
+            List<FeatureContainer> retrievedFeatures = retrieve(query, database, featureType);
+            String result = classify(retrievedFeatures, k);
+            sum.set(sum.intValue() + (result.equals(query.getCategory()) ? 1 : 0));
+        });
+
+        System.out.println((float) sum.intValue() / queries.length);
+        return (float)sum.intValue() / queries.length;
     }
 
     private int getArgb(byte r, byte g, byte b) {

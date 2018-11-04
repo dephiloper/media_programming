@@ -164,7 +164,7 @@
                      </VBox.margin>
                   </Label>
                   <TextField fx:id="predictionResult" editable="false" />
-                  <HBox prefWidth="200.0" VBox.vgrow="ALWAYS">
+                  <VBox prefWidth="200.0" VBox.vgrow="ALWAYS">
                      <children>
                         <Button fx:id="evaluationBtn" mnemonicParsing="false" text="Evaluation" />
                         <Label fx:id="correctRateLabel" text="Correct Rate:">
@@ -176,7 +176,7 @@
                      <VBox.margin>
                         <Insets top="10.0" />
                      </VBox.margin>
-                  </HBox>
+                  </VBox>
                </children>
                <HBox.margin>
                   <Insets />

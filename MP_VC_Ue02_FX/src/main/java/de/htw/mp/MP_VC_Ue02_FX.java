@@ -22,8 +22,8 @@ public class MP_VC_Ue02_FX extends Application {
 		Parent ui = new FXMLLoader(res).load();
 		Scene scene = new Scene(ui);
 		stage.setScene(scene);
-		stage.setTitle("DatasetViewer - Your name here");
-		stage.setOnCloseRequest((WindowEvent event) -> { Platform.exit(); });
+		stage.setTitle("DatasetViewer - Gruppe Drei");
+		stage.setOnCloseRequest((WindowEvent event) -> Platform.exit());
 		stage.show();
 	}
 }
