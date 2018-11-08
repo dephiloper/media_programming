@@ -1,16 +1,20 @@
 package de.sb.messenger.persistence;
 
-import java.lang.Comparable;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.*;
+import javax.validation.Valid;
 import javax.validation.constraints.*;
 
 import com.sun.istack.internal.Nullable;
 
-@Table(name = "Person", schema = "SPers")
+@Table(name = "Person", schema = "messenger")
 @Entity
 @PrimaryKeyJoinColumn(name = "personIdentity")
 public class Person extends BaseEntity{
+	
+	private static final byte[] DEFAULT_HASH = HashTools.sha256HashCode("default");
 	
 	// attributes
 	
@@ -26,25 +30,36 @@ public class Person extends BaseEntity{
 	
 	@NotNull
 	@ManyToMany(fetch = FetchType.EAGER)
-	@JoinTable(name = "ObservationAssociation", joinColumns = 
-	@JoinColumn(name = "observedReference", referencedColumnName = "personIdentity"), inverseJoinColumns = 
-	@JoinColumn(name = "observingReference", referencedColumnName = "personIdentity"))
+	@JoinTable(
+			schema = "messenger",
+			name = "ObservationAssociation",
+			joinColumns = @JoinColumn(name = "observedReference"),
+			inverseJoinColumns = @JoinColumn(name = "observingReference"),
+			uniqueConstraints = @UniqueConstraint(columnNames= {"peopleObserved"}) //die beiden Referenzen observed TODO
+	)
 	private Set<Person> peopleObserved;
 		
 	@Embedded
+	@Valid
 	private Name name;
 	
 	@Embedded
+	@Valid
 	private Address address;
 	
-	@Embedded
+	@Column(name= "groupAlias", nullable = false, updatable = true)
+	@Enumerated(EnumType.STRING)
 	private Group group;
 	
 	@NotNull
 	@ManyToMany(fetch = FetchType.EAGER)
-	@JoinTable(name = "ObservationAssociation", joinColumns = 
-	@JoinColumn(name = "observingReference", referencedColumnName = "personIdentity"), inverseJoinColumns = 
-	@JoinColumn(name = "observedReference", referencedColumnName = "personIdentity"))
+	@JoinTable(
+			schema = "messenger",
+			name = "ObservationAssociation",
+			joinColumns = @JoinColumn(name = "observedReference"),
+			inverseJoinColumns = @JoinColumn(name = "observingReference"),
+			uniqueConstraints = @UniqueConstraint(columnNames= {"peopleObserving"}) //die beiden Referenzen observed TODO
+	)
 	public Set<Person> peopleObserving;
 	
 	@Nullable
@@ -60,16 +75,18 @@ public class Person extends BaseEntity{
 	// constructors
 	
 	protected Person() {
-		
+		this(null); //TODO public constr. aufrufen mit nullwerten
 	}
 	
-	public Person(Name name, Group group, Address address, String email, byte[] passwordHash, Document avatar) {
-		this.name = name;
-		this.group = group;
-		this.address = address;
-		this.email = email;
-		this.passwordHash = passwordHash;
+	public Person(Document avatar) {
+		this.name = new Name();
+		this.group = Group.USER; // TODO setter public machen
+		this.address = new Address();
+		this.passwordHash = DEFAULT_HASH; // TODO In static var
 		this.avatar = avatar;
+		this.messagesAuthored = Collections.emptySet();
+		this.peopleObserving = Collections.emptySet();
+		this.peopleObserved = new HashSet<>();
 	}
 	
 	// methods
@@ -126,7 +143,7 @@ public class Person extends BaseEntity{
 		return this.group;
 	}
 	
-	protected void setGroup(Group group) {
+	public void setGroup(Group group) {
 		this.group = group;
 	}
 	
@@ -134,7 +151,7 @@ public class Person extends BaseEntity{
 		return this.name;
 	}
 	
-	protected void setName(Name name) {
+	public void setName(Name name) {
 		this.name = name;
 	}
 	
@@ -142,92 +159,7 @@ public class Person extends BaseEntity{
 		return this.address;
 	}
 	
-	protected void setAddress(Address address) {
+	public void setAddress(Address address) {
 		this.address = address;
-	}
-
-	@Embeddable
-	public static class Group implements Comparable<Group>{
-
-		private static final int ADMIN_ID = 0;
-		private static final int USER_ID = 1;
-
-		public static final Group ADMIN = new Group(ADMIN_ID);
-		public static final Group USER = new Group(USER_ID);
-
-		private int id;
-
-		public Group(int id) {
-			this.id = id;
-		}
-
-		public Group() {
-		}
-
-		private int getId() {
-			return this.id;
-		}
-
-		public int compareTo(Group group) {
-			if (this.id == group.getId())
-				return 1;
-			return 0;
-		}
-	}
-
-	@Embeddable
-	class Name implements Comparable<Name>{
-		
-		@Size(min = 1, max = 31)
-		@NotNull
-		@Column(name = "surname")
-		private String family;
-		
-		@Size(min = 1, max = 31)
-		@NotNull
-		@Column(name = "forename")
-		private String given;
-
-		public Name(String family, String given){
-			this.family = family;
-			this.given = given;
-		}
-		
-		public int compareTo(Name arg0) {
-			// TODO Auto-generated method stub
-			return 0;
-		} 
-	}
-	@Embeddable
-	class Address implements Comparable<Address> {
-		
-		@Size(min = 1, max = 63)
-		@Nullable
-		@Column(name = "street")
-		private String street;
-		
-		@Size(min = 1, max = 15)
-		@Nullable
-		@Column(name = "postcode")
-		private String postcode;
-		
-		@Size(min = 1, max = 63)
-		@NotNull
-		@Column(name = "city")
-		private String city;
-		
-		public Address(String street, String postcode, String city){
-			this.street = street;
-			this.postcode = postcode;
-			this.city = city;
-		}
-
-		Address() {
-		}
-
-		public int compareTo(Address arg0) {
-			// TODO Auto-generated method stub
-			return 0;
-		}
 	}
 }

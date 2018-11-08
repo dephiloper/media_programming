@@ -2,7 +2,7 @@ package de.sb.messenger.persistence;
 
 import javax.persistence.*;
 
-@Table(name = "Message", schema = "SMes")
+@Table(name = "Message", schema = "messenger")
 @Entity
 @PrimaryKeyJoinColumn(name = "messageIdentity")
 public class Message extends BaseEntity{
@@ -17,6 +17,10 @@ public class Message extends BaseEntity{
 	@ManyToOne
 	@JoinColumn(name = "subjectReference", referencedColumnName = "identity")
 	private BaseEntity subject;
+	
+	protected Message() {
+		this(null, null, null);
+	}
 	
 	public Message(String body, Person author, BaseEntity subject) {
 		this.body = body;

@@ -3,10 +3,10 @@ package de.sb.messenger.persistence;
 import javax.persistence.*;
 import javax.validation.constraints.*;
 
-@Table(name = "Document", schema = "SDoc")
+@Table(name = "Document", schema = "messenger")
 @Entity
 @PrimaryKeyJoinColumn(name = "documentIdentity")
-public class Document extends BaseEntity{
+public class Document extends BaseEntity {
 	
 	@Size(min = 32, max = 32)
 	@NotNull
@@ -23,7 +23,7 @@ public class Document extends BaseEntity{
 	private String contentType;
 	
 	protected Document() {
-	
+		this(null, null, null);
 	}
 	
 	public Document(byte[] contentHash, byte[] content, String contentType) {
@@ -33,7 +33,7 @@ public class Document extends BaseEntity{
 	}
 	
 	public byte[] scaledImageContent(String fileType, byte[] content, int width, int height) {
-		//TODO 
+		//TODO
 		byte[] imageContent = new byte[0];
 		return imageContent;
 	}
