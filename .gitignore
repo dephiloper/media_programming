@@ -4,3 +4,6 @@ out/
 dataset/
 build/
 *.iml
+MP_VC_UE02_FX/gradle/
+MP_VC_UE02_FX/gradlew
+MP_VC_UE02_FX/gradlew.bat

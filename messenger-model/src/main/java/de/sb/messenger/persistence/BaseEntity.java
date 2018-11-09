@@ -1,5 +1,6 @@
 package de.sb.messenger.persistence;
 
+import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.*;
 import javax.validation.constraints.*;
@@ -33,7 +34,7 @@ public class BaseEntity implements Comparable<BaseEntity>{
 	public Set<Message> messagesCaused;
 	
 	protected BaseEntity() {
-		
+		this(0, 0, 0, new HashSet<Message>());
 	}
 	
 	public BaseEntity(long identity, long creationTimestamp, int version, Set<Message> messagesCaused) {
