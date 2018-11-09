@@ -9,7 +9,10 @@ public class SanityCheck {
 	public static void main (String[] args) {
 		EntityManagerFactory emf = Persistence.createEntityManagerFactory("messenger");
 		EntityManager em = emf.createEntityManager();
-		em.find(BaseEntity.class, 1L);
+		Person e = em.find(Person.class, 2L);
+		
+		
+		System.out.println(e);
 	}
 
 }

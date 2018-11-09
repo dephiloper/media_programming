@@ -1,12 +1,12 @@
 package de.sb.messenger.persistence;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Positive;
-import javax.validation.constraints.PositiveOrZero;
 import java.util.Set;
+import javax.persistence.*;
+import javax.validation.constraints.*;
 
-@Table(name = "BaseEntity", schema = "SBase")
+import de.sb.messenger.persistence.Message;
+
+@Table(name = "BaseEntity", schema = "messenger")
 @Entity
 @Inheritance(strategy=InheritanceType.JOINED)
 @DiscriminatorColumn(name="discriminator")
@@ -80,9 +80,8 @@ public class BaseEntity implements Comparable<BaseEntity>{
 		return this.getClass().getName() + "@" + this.identity;
 	}
 
-	public int compareTo(BaseEntity baseEntity) {
-		if(this.getIdentity()==baseEntity.getIdentity())
-			return 1;
-		return 0;
+	@Override
+	public int compareTo(BaseEntity base) {
+		return Long.compare(this.identity, base.identity);	
 	}
 }
