@@ -35,7 +35,7 @@ public class Person extends BaseEntity{
 			name = "ObservationAssociation",
 			joinColumns = @JoinColumn(name = "observedReference"),
 			inverseJoinColumns = @JoinColumn(name = "observingReference"),
-			uniqueConstraints = @UniqueConstraint(columnNames= {"peopleObserved"}) //die beiden Referenzen observed TODO
+			uniqueConstraints = @UniqueConstraint(columnNames= {"observedReference", "observingReference"})
 	)
 	private Set<Person> peopleObserved;
 		
@@ -52,20 +52,12 @@ public class Person extends BaseEntity{
 	private Group group;
 	
 	@NotNull
-	@ManyToMany(fetch = FetchType.EAGER)
-	@JoinTable(
-			schema = "messenger",
-			name = "ObservationAssociation",
-			joinColumns = @JoinColumn(name = "observedReference"),
-			inverseJoinColumns = @JoinColumn(name = "observingReference"),
-			uniqueConstraints = @UniqueConstraint(columnNames= {"peopleObserving"}) //die beiden Referenzen observed TODO
-	)
+	@ManyToMany(mappedBy = "peopleObserved", cascade = {}) // TODO remove refresh ...
 	public Set<Person> peopleObserving;
 	
 	@Nullable
-	@OneToMany(cascade = CascadeType.REMOVE)
+	@OneToMany(mappedBy = "author", cascade = {CascadeType.REMOVE}) // TODO refresh ...
 	public Set<Message> messagesAuthored;
-	
 	
 	@NotNull
 	@ManyToOne
@@ -75,14 +67,14 @@ public class Person extends BaseEntity{
 	// constructors
 	
 	protected Person() {
-		this(null); //TODO public constr. aufrufen mit nullwerten
+		this(null);
 	}
 	
 	public Person(Document avatar) {
 		this.name = new Name();
-		this.group = Group.USER; // TODO setter public machen
+		this.group = Group.USER;
 		this.address = new Address();
-		this.passwordHash = DEFAULT_HASH; // TODO In static var
+		this.passwordHash = DEFAULT_HASH;
 		this.avatar = avatar;
 		this.messagesAuthored = Collections.emptySet();
 		this.peopleObserving = Collections.emptySet();
@@ -103,11 +95,11 @@ public class Person extends BaseEntity{
 		return this.avatar;
 	}
 	
-	protected void getAvatar(Document doc) {
+	protected void setAvatar(Document doc) {
 		this.avatar = doc;
 	}
 	
-	public Set<Person> getObserving(){
+	public Set<Person> getPeopleObserving(){
 		return this.peopleObserving;
 	}
 	
@@ -115,7 +107,7 @@ public class Person extends BaseEntity{
 		this.peopleObserving = peopleObserving;
 	}
 	
-	public Set<Person> getObserved(){
+	public Set<Person> getPeopleObserved(){
 		return this.peopleObserved;
 	}
 	
@@ -151,15 +143,7 @@ public class Person extends BaseEntity{
 		return this.name;
 	}
 	
-	public void setName(Name name) {
-		this.name = name;
-	}
-	
 	public Address getAddress() {
 		return this.address;
-	}
-	
-	public void setAddress(Address address) {
-		this.address = address;
 	}
 }

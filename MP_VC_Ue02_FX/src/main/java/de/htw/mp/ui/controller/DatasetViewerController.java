@@ -153,7 +153,16 @@ public class DatasetViewerController extends DatasetViewerBase {
             map.merge(category, 1, (a, b) -> a + b);
         }
 
-        return map.firstKey();
+        Integer highest = new Integer(0);
+        String category = "";
+        for (Map.Entry<String, Integer> entry : map.entrySet()) {
+            if (entry.getValue() > highest) {
+                category = entry.getKey();
+                highest = entry.getValue();
+            }
+        }
+
+        return category;
     }
 
     /**
@@ -288,5 +297,4 @@ public class DatasetViewerController extends DatasetViewerBase {
 
         return distance;
     }
-
 }
