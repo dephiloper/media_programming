@@ -1,44 +1,39 @@
 package de.sb.messenger.rest;
 
 import de.sb.messenger.persistence.Document;
+import de.sb.messenger.persistence.Group;
 import de.sb.messenger.persistence.Person;
 import de.sb.toolbox.Copyright;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
+import javax.persistence.RollbackException;
 import javax.validation.constraints.Positive;
 import javax.ws.rs.*;
-import java.util.List;
-import java.util.Set;
+import javax.ws.rs.core.Response;
 
 import static de.sb.messenger.rest.BasicAuthenticationFilter.REQUESTER_IDENTITY;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.MediaType.APPLICATION_XML;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
+import static javax.ws.rs.core.MediaType.*;
+import static javax.ws.rs.core.Response.Status.*;
 
 @Path("people")
 @Copyright(year = 2018, holders = "Gruppe Drei (Gruppe 5)")
 public class PersonService {
-    private static EntityManagerFactory entityManagerFactory;
+    private static final EntityManagerFactory entityManagerFactory =
+            Persistence.createEntityManagerFactory("messenger");
 
     /**
      * TODO: GET /people
      * Returns the people matching the given filter criteria, with missing
-     * parameters identifying omitted criteria, sorted by family name, given name, email.
+     * parameters identifying omitted (ausgelassenen) criteria, sorted by family name, given name, email.
      * Search criteria should be any “normal” property of person and it’s composites, except
      * identity and password, plus resultOffset and resultLimit which define a result range.
      */
     @GET
     @Produces({ APPLICATION_JSON, APPLICATION_XML })
-    public Set<Person> queryPeople (/*@QueryParam("filter") int filter*/) {
-        final EntityManager messengerManager = entityManagerFactory.createEntityManager();
-        /*final Set<Person> entity = messengerManager.find(Person.class);
-        if (entity == null) throw new ClientErrorException(NOT_FOUND);
-
-        return entity;*/
+    public Person[] queryPeople (/*@QueryParam("filter") int filter*/) {
+        final EntityManager entityManager = entityManagerFactory.createEntityManager();
 
         throw new ClientErrorException(NOT_IMPLEMENTED);
     }
@@ -56,15 +51,58 @@ public class PersonService {
     @POST
     @Consumes({ APPLICATION_JSON })
     @Produces({ TEXT_PLAIN })
-    public String createUpdatePerson(@HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity
-            /*@FormParam("name") String name,*/) {
-        final EntityManager messengerManager = entityManagerFactory.createEntityManager();
-        /*final Set<Person> entity = messengerManager.find(Person.class);
-        if (entity == null) throw new ClientErrorException(NOT_FOUND);
+    public String createUpdatePerson(
+            @HeaderParam(REQUESTER_IDENTITY)
+            @Positive final long requesterIdentity,
+            @HeaderParam("Set-Password") String setPassword,
+            Person person) {
 
-        return entity;*/
+        // TODO: method can probably be simplified
 
-        throw new ClientErrorException(NOT_IMPLEMENTED);
+        final EntityManager entityManager = entityManagerFactory.createEntityManager();
+        Person requester = entityManager.find(Person.class, requesterIdentity);
+
+        // check if requester is null
+        if (requester == null)
+            throw new ClientErrorException(NOT_FOUND);
+
+        // creates person if requester is admin
+        if (person.getIdentity() == 0 && requester.getGroup() == Group.ADMIN) {
+            //TODO set password: setPassword
+            entityManager.getTransaction().begin();
+            entityManager.persist(person);
+
+            try {
+                entityManager.getTransaction().commit();
+            } catch (final RollbackException exception) {
+                throw new ClientErrorException(CONFLICT);
+            } finally {
+                entityManager.getTransaction().rollback();
+            }
+
+        }
+        // (see description above) Use the Header field “Requester-Identity” to make sure the requester is either
+        // the person to be modified, or an administrator
+        else if (person.getIdentity() == requesterIdentity || requester.getGroup() == Group.ADMIN) {
+
+            if (requester.getGroup() != Group.ADMIN)
+                person.setGroup(Group.USER);
+
+            //TODO set password: setPassword
+            entityManager.getTransaction().begin();
+            entityManager.merge(person);
+
+            try {
+                entityManager.getTransaction().commit();
+            } catch (final RollbackException exception) {
+                throw new ClientErrorException(CONFLICT);
+            } finally {
+                entityManager.getTransaction().rollback();
+            }
+        }
+
+        entityManager.close();
+        return String.valueOf(person.getIdentity());
     }
 
 
@@ -89,6 +127,7 @@ public class PersonService {
         if (person == null)
             throw new ClientErrorException(NOT_FOUND);
 
+        entityManager.close();
         return person;
     }
 
@@ -97,23 +136,33 @@ public class PersonService {
      * Returns the avatar content of the person matching the
      * given identity, plus it's content type as part of the HTTP response header. Use
      * MediaType.WILDCARD to declare production of an a priori unknown media type, and return
-     * an instance of Result that contains both the media type and the content. If the query
+     * an instance of Response that contains both the media type and the content. If the query
      * parameters width and height are present, then scale the returned image content using
      * Document#scaledImageContent().
      */
     @GET
     @Path("{id}/avatar")
-    @Produces({ APPLICATION_JSON, APPLICATION_XML })
-    public Document queryAvatar (
+    @Produces({ WILDCARD })
+    public Response queryAvatar (
             @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
-            @PathParam("id") @Positive final long entityIdentity) {
-        final EntityManager messengerManager = entityManagerFactory.createEntityManager();
-        /*final Set<Person> entity = messengerManager.find(Person.class);
-        if (entity == null) throw new ClientErrorException(NOT_FOUND);
+            @PathParam("id") @Positive final long entityIdentity,
+            @QueryParam("width") final long width,
+            @QueryParam("height") final long height) {
+        final EntityManager entityManager = entityManagerFactory.createEntityManager();
 
-        return entity;*/
+        Person person = entityManager.find(Person.class, entityIdentity);
 
-        throw new ClientErrorException(NOT_IMPLEMENTED);
+        Response.ResponseBuilder rBuild = Response.status(Response.Status.NOT_FOUND);
+
+        if (person != null && person.avatar != null) {
+            rBuild = Response.ok(person.avatar, APPLICATION_JSON);
+
+            if (width != 0 && height != 0) {
+                //TODO: person.avatar.scaledImageContent()
+            }
+        }
+
+        return rBuild.build();
     }
 
     /**
@@ -132,7 +181,7 @@ public class PersonService {
     @Path("{id}/avatar")
     @Consumes(APPLICATION_JSON)
     public String updateAvatar() {
-        final EntityManager messengerManager = entityManagerFactory.createEntityManager();
+        final EntityManager entityManager = entityManagerFactory.createEntityManager();
         throw new ClientErrorException(NOT_IMPLEMENTED);
     }
 
@@ -144,14 +193,10 @@ public class PersonService {
     @GET
     @Path("{id}/messagesAuthored")
     @Produces({ APPLICATION_JSON, APPLICATION_XML })
-    public Set<Document> queryPersonMessages (
+    public Document[] queryPersonMessages (
             @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
             @PathParam("id") @Positive final long entityIdentity) {
-        final EntityManager messengerManager = entityManagerFactory.createEntityManager();
-        /*final Set<Person> entity = messengerManager.find(Person.class);
-        if (entity == null) throw new ClientErrorException(NOT_FOUND);
-
-        return entity;*/
+        final EntityManager entityManager = entityManagerFactory.createEntityManager();
 
         throw new ClientErrorException(NOT_IMPLEMENTED);
     }
@@ -170,11 +215,7 @@ public class PersonService {
     public String updatePeopleObserved (
             @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
             @PathParam("id") @Positive final long entityIdentity) {
-        final EntityManager messengerManager = entityManagerFactory.createEntityManager();
-        /*final Set<Person> entity = messengerManager.find(Person.class);
-        if (entity == null) throw new ClientErrorException(NOT_FOUND);
-
-        return entity;*/
+        final EntityManager entityManager = entityManagerFactory.createEntityManager();
 
         throw new ClientErrorException(NOT_IMPLEMENTED);
     }

@@ -5,9 +5,9 @@ import de.sb.toolbox.Copyright;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
 import javax.validation.constraints.Positive;
 import javax.ws.rs.*;
-import java.util.Set;
 
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -16,7 +16,8 @@ import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 @Path("messages")
 @Copyright(year = 2018, holders = "Gruppe Drei (Gruppe 5)")
 public class MessageService {
-    private static EntityManagerFactory entityManagerFactory;
+    private static final EntityManagerFactory entityManagerFactory =
+            Persistence.createEntityManagerFactory("messenger");
 
     /**
      * TODO: GET /messages
@@ -27,12 +28,8 @@ public class MessageService {
      */
     @GET
     @Produces({ APPLICATION_JSON, APPLICATION_XML })
-    public Set<Message> queryMessages () {
-        final EntityManager messengerManager = entityManagerFactory.createEntityManager();
-        /*final Set<Person> entity = messengerManager.find(Person.class);
-        if (entity == null) throw new ClientErrorException(NOT_FOUND);
-
-        return entity;*/
+    public Message[] queryMessages () {
+        final EntityManager entityManager = entityManagerFactory.createEntityManager();
 
         throw new ClientErrorException(NOT_IMPLEMENTED);
     }
@@ -51,6 +48,7 @@ public class MessageService {
         if (message == null)
             throw new ClientErrorException(NOT_FOUND);
 
+        entityManager.close();
         return message;
     }
 

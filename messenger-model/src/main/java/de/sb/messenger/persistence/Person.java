@@ -62,7 +62,7 @@ public class Person extends BaseEntity{
 	@NotNull
 	@ManyToOne
 	@JoinColumn(name = "avatarReference", referencedColumnName = "documentIdentity")
-	public Document avatar;
+	public Document avatar; // TODO is public correct?
 	
 	// constructors
 	
