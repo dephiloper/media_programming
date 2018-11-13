@@ -1,6 +1,5 @@
 package de.sb.messenger.rest;
 
-import static de.sb.messenger.persistence.Person.Group.ADMIN;
 import static de.sb.messenger.rest.BasicAuthenticationFilter.REQUESTER_IDENTITY;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
@@ -8,7 +7,9 @@ import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
@@ -23,6 +24,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 
 import de.sb.messenger.persistence.BaseEntity;
+import de.sb.messenger.persistence.Group;
 import de.sb.messenger.persistence.Message;
 import de.sb.messenger.persistence.Person;
 import de.sb.toolbox.Copyright;
@@ -62,7 +64,6 @@ public class EntityService {
 		return entity;
 	}
 
-
 	/**
 	 * Deletes the entity matching the given identity, or does nothing if no such entity exists.
 	 * @param requesterIdentity the authenticated requester identity
@@ -82,7 +83,7 @@ public class EntityService {
 	) {
 		final EntityManager messengerManager = RestJpaLifecycleProvider.entityManager("messenger");
 		final Person requester = messengerManager.find(Person.class, requesterIdentity);
-		if (requester == null || requester.getGroup() != ADMIN) throw new ClientErrorException(FORBIDDEN);
+		if (requester == null || requester.getGroup() != Group.ADMIN) throw new ClientErrorException(FORBIDDEN);
 
 		// TODO: check if getReference() works once https://bugs.eclipse.org/bugs/show_bug.cgi?id=460063 is fixed.
 		final BaseEntity entity = messengerManager.find(BaseEntity.class, entityIdentity);

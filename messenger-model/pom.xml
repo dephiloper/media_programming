@@ -93,11 +93,13 @@
             <version>3.22.0-CR2</version>
         </dependency>
 
+<!--
         <dependency>
             <groupId>org.glassfish.jersey.ext</groupId>
             <artifactId>jersey-bean-validation</artifactId>
             <version>2.26</version>
         </dependency>
+-->
 
         <dependency>
             <groupId>org.glassfish.jersey.core</groupId>
