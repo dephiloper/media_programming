@@ -14,6 +14,7 @@ import javax.validation.constraints.Positive;
 import javax.ws.rs.*;
 
 import static javax.ws.rs.core.MediaType.*;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 
@@ -126,7 +127,13 @@ public class MessageService {
                 .createQuery("select person from Persons as person where (person.identity = :personIdentity", Person.class)
                 .setParameter("personIdentity", requesterIdentity)
                 .getSingleResult();
+        if (author == null) {
+            throw new ClientErrorException(BAD_REQUEST);
+        }
         BaseEntity subject = entityManager.createQuery("TODO", BaseEntity.class).getSingleResult();
+        if (subject == null) {
+            throw new ClientErrorException(BAD_REQUEST);
+        }
 
         Message message = new Message(body, author, subject);
         entityManager.getTransaction().begin();
