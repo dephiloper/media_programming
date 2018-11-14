@@ -1,11 +1,15 @@
 package de.sb.messenger.rest;
 
+import de.sb.messenger.persistence.BaseEntity;
 import de.sb.messenger.persistence.Message;
+import de.sb.messenger.persistence.Person;
 import de.sb.toolbox.Copyright;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import javax.persistence.Query;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.ws.rs.*;
 
@@ -28,10 +32,59 @@ public class MessageService {
      */
     @GET
     @Produces({ APPLICATION_JSON, APPLICATION_XML })
-    public Message[] queryMessages () {
+    public Message[] queryMessages(
+        @QueryParam("fragment") String fragment,
+        @QueryParam("lowerCreationTimestamp") Long lowerCreationTimestamp,
+        @QueryParam("upperCreationTimestamp") Long upperCreationTimestamp,
+        @QueryParam("resultOffset") Integer resultOffset,
+        @QueryParam("resultLimit") Integer resultLimit)
+    {
         final EntityManager entityManager = entityManagerFactory.createEntityManager();
 
-        throw new ClientErrorException(NOT_IMPLEMENTED);
+        StringBuilder queryStrings = new StringBuilder();
+        queryStrings.append("select message from Messages as message");
+
+        boolean criteria_present = false;
+        if (fragment != null) {
+            queryStrings.append(" where\n(message.body like :fragment)");
+            criteria_present = true;
+        }
+        if (lowerCreationTimestamp != null) {
+            if (criteria_present)
+                queryStrings.append(" and\n");
+            else
+                queryStrings.append(" where\n");
+
+            queryStrings.append("(message.creationTimestamp >= :lowerCreationTimestamp)");
+            criteria_present = true;
+        }
+        if (upperCreationTimestamp != null) {
+            if (criteria_present)
+                queryStrings.append(" and\n");
+            else
+                queryStrings.append(" where\n");
+            queryStrings.append("(message.creationTimestamp <= :upperCreationTimestamp)");
+        }
+
+        String queryString = queryStrings.toString();
+
+        Query query = entityManager.createQuery(queryString);
+
+        if (resultOffset != null)
+            query.setFirstResult(resultOffset);
+        if (resultLimit != null)
+            query.setMaxResults(resultLimit);
+
+        if (fragment != null)
+            query.setParameter("fragment", fragment);
+        if (lowerCreationTimestamp != null)
+            query.setParameter("lowerCreationTimestamp", lowerCreationTimestamp);
+        if (upperCreationTimestamp != null)
+            query.setParameter("upperCreationTimestamp", upperCreationTimestamp);
+
+        entityManager.close();
+
+        return (Message[])query.getResultList().toArray();
     }
 
     /**
@@ -61,12 +114,28 @@ public class MessageService {
      * authentication. Return the affected message's identity as text/plain.
      */
     @POST
-    @Path("{id}")
     @Produces({TEXT_PLAIN})
-    public String createMessage (@PathParam("id") @Positive final long messageIdentity) {
-        final EntityManager entityManager = entityManagerFactory.createEntityManager();
+    @Consumes({"application/x-www-form-urlencoded"})
+    public String createMessage(@NotNull @FormParam("body") String body,
+                                @NotNull @FormParam("subjectReference") String subjectReference,
+                                @NotNull @HeaderParam("Requester-Identity") Long requesterIdentity)
+    {
 
-        throw new ClientErrorException(NOT_IMPLEMENTED);
+        final EntityManager entityManager = entityManagerFactory.createEntityManager();
+        Person author = entityManager
+                .createQuery("select person from Persons as person where (person.identity = :personIdentity", Person.class)
+                .setParameter("personIdentity", requesterIdentity)
+                .getSingleResult();
+        BaseEntity subject = entityManager.createQuery("TODO", BaseEntity.class).getSingleResult();
+
+        Message message = new Message(body, author, subject);
+        entityManager.getTransaction().begin();
+        entityManager.persist(message);
+        entityManager.flush();
+        entityManager.getTransaction().commit();
+        entityManager.close();
+
+        return Long.toString(message.getIdentity());
     }
 
     /*
