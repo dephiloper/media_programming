@@ -30,7 +30,8 @@ public class MessageService {
     @Produces({ APPLICATION_JSON, APPLICATION_XML })
     public Message[] queryMessages () {
         final EntityManager entityManager = entityManagerFactory.createEntityManager();
-
+        	
+        
         throw new ClientErrorException(NOT_IMPLEMENTED);
     }
 
@@ -55,9 +56,9 @@ public class MessageService {
     /**
      * TODO: POST /messages
      * Creates a new message, using an HTTP form as a body
-     * parameter (content type "application/x-www-form-urlencoded") with the fields “body”
-     * (message body) and “subjectReference” (message subject), and Header field
-     * “Requester-Identity” (message author) – this header field will later be supplied during
+     * parameter (content type "application/x-www-form-urlencoded") with the fields â€œbodyâ€�
+     * (message body) and â€œsubjectReferenceâ€� (message subject), and Header field
+     * â€œRequester-Identityâ€� (message author) â€“ this header field will later be supplied during
      * authentication. Return the affected message's identity as text/plain.
      */
     @POST
@@ -72,9 +73,9 @@ public class MessageService {
     /*
      * TODO: Appendix
      * Sind dabei Filter-Queries gefordert, so definiert als Query-Parameter ein Suchkriterium
-     * pro textuellem Entity-Feld, und zwei für numerische Felder (für >= und <= Vergleich).
-     * Definiert zudem einen JP-QL Query nach folgendem Muster (statt „=“ kann für mehr
-     * Flexibilität auch „like“ verwendet werden, ist aber deutlich teurer in der Ausführung):
+     * pro textuellem Entity-Feld, und zwei fÃ¼r numerische Felder (fÃ¼r >= und <= Vergleich).
+     * Definiert zudem einen JP-QL Query nach folgendem Muster (statt â€ž=â€œ kann fÃ¼r mehr
+     * FlexibilitÃ¤t auch â€žlikeâ€œ verwendet werden, ist aber deutlich teurer in der AusfÃ¼hrung):
      *
      * select x from X as x where
      * (:lowerNumber is null or x.number >= :lowerNumber) and
@@ -82,16 +83,16 @@ public class MessageService {
      * (:text is null or x.text = :text) ...
      *
      * Wird durch einen Service eine Relation modifiziert, dann sind nach Speicherung der
-     * Änderungen (i.e. commit) zudem alle Entitäten aus dem 2nd-Level Cache zu entfernen
-     * deren „mappedBy“-Relationsmengen sich dadurch ändern; diese Spiegel-Mengen werden
+     * Ã„nderungen (i.e. commit) zudem alle EntitÃ¤ten aus dem 2nd-Level Cache zu entfernen
+     * deren â€žmappedByâ€œ-Relationsmengen sich dadurch Ã¤ndern; diese Spiegel-Mengen werden
      * weder im 1st-Level Cache noch im 2nd-Level Cache automatisch verwaltet:
      *
      * cache = entityManager.getEntityManagerFactory().getCache();
      * cache.evict(entity.getClass(), entity.getIdentity());
      *
-     * Beachtet: Streng genommen müssten wir dieselbe Cache-Invalidierung auch mit dem
-     * 1st-Level Cache durchführen (z.B. mittels entityManager#refresh(entity)); dieser
-     * wird jedoch im Web-Services sowieso zeitnah geschlossen, daher können wir diesen
+     * Beachtet: Streng genommen mÃ¼ssten wir dieselbe Cache-Invalidierung auch mit dem
+     * 1st-Level Cache durchfÃ¼hren (z.B. mittels entityManager#refresh(entity)); dieser
+     * wird jedoch im Web-Services sowieso zeitnah geschlossen, daher kÃ¶nnen wir diesen
      * Aufwand fast immer sparen.
      */
 }
