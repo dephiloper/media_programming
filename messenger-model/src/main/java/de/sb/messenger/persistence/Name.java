@@ -50,7 +50,7 @@ public class Name implements Comparable<Name>{
 			return 1;
 		return 0;
 		
-		// possible with String.compareToString
+		// TODO possible with String.compareToString
 		
 	} 
 }
