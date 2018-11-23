@@ -16,10 +16,10 @@ import javax.ws.rs.*;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 
 @Path("messages")
 @Copyright(year = 2018, holders = "Gruppe Drei (Gruppe 5)")
+// TODO implement PersistenceManagerFactoryContainer
 public class MessageService {
     private static final EntityManagerFactory entityManagerFactory =
             Persistence.createEntityManagerFactory("messenger");
@@ -33,6 +33,8 @@ public class MessageService {
      */
     @GET
     @Produces({ APPLICATION_JSON, APPLICATION_XML })
+    // TODO Collection<Message>
+    // na findest du mich? Ich hab mich hier versteckt und du weist es nicht. hihi. wir sind kleine strolche!
     public Message[] queryMessages(
         @QueryParam("fragment") String fragment,
         @QueryParam("lowerCreationTimestamp") Long lowerCreationTimestamp,
@@ -43,7 +45,7 @@ public class MessageService {
         final EntityManager entityManager = entityManagerFactory.createEntityManager();
 
         StringBuilder queryStrings = new StringBuilder();
-        queryStrings.append("select message from Messages as message");
+        queryStrings.append("select message from Message as message");
 
         boolean criteria_present = false;
         if (fragment != null) {
@@ -85,6 +87,7 @@ public class MessageService {
 
         entityManager.close();
 
+        // TODO sort
         return (Message[])query.getResultList().toArray();
     }
 
@@ -124,7 +127,7 @@ public class MessageService {
 
         final EntityManager entityManager = entityManagerFactory.createEntityManager();
         Person author = entityManager
-                .createQuery("select person from Persons as person where (person.identity = :personIdentity", Person.class)
+                .createQuery("select person from Person as person where (person.identity = :personIdentity", Person.class)
                 .setParameter("personIdentity", requesterIdentity)
                 .getSingleResult();
         if (author == null) {
