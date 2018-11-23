@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 import javax.json.bind.annotation.JsonbProperty;
 import javax.json.bind.annotation.JsonbTransient;
+import javax.json.bind.annotation.JsonbVisibility;
 import javax.persistence.*;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -13,10 +14,12 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlTransient;
 
 import com.sun.istack.internal.Nullable;
+import de.sb.toolbox.bind.JsonProtectedPropertyStrategy;
 
 @Table(name = "Person", schema = "messenger")
 @Entity
 @PrimaryKeyJoinColumn(name = "personIdentity")
+@JsonbVisibility(JsonProtectedPropertyStrategy.class)
 public class Person extends BaseEntity{
 	
 	private static final byte[] DEFAULT_HASH = HashTools.sha256HashCode("default");

@@ -14,7 +14,7 @@ import javax.xml.bind.annotation.XmlTransient;
 @Table(name = "Document", schema = "messenger")
 @Entity
 @PrimaryKeyJoinColumn(name = "documentIdentity")
-@JsonbVisibility(JsonProtectedPropertyStrategy.class) // TODO in alle Klassen
+@JsonbVisibility(JsonProtectedPropertyStrategy.class)
 public class Document extends BaseEntity {
 
 	private static final byte[] EMPTY_CONTENT = new byte[0];

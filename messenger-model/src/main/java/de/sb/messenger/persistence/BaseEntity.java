@@ -1,9 +1,12 @@
 package de.sb.messenger.persistence;
 
+import de.sb.toolbox.bind.JsonProtectedPropertyStrategy;
+
 import java.util.HashSet;
 import java.util.Set;
 import javax.json.bind.annotation.JsonbProperty;
 import javax.json.bind.annotation.JsonbTransient;
+import javax.json.bind.annotation.JsonbVisibility;
 import javax.persistence.*;
 import javax.validation.constraints.*;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -16,6 +19,7 @@ import javax.xml.bind.annotation.XmlTransient;
 @Inheritance(strategy=InheritanceType.JOINED)
 @DiscriminatorColumn(name="discriminator")
 @XmlAccessorType(XmlAccessType.NONE)
+@JsonbVisibility(JsonProtectedPropertyStrategy.class)
 public class BaseEntity implements Comparable<BaseEntity>{
 	
 	@Id
