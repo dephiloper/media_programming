@@ -212,7 +212,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
     }
 
     /**
-     * TODO: PUT /people/{id}/avatar
+     * PUT /people/{id}/avatar
      * Updates the given person's avatar using the document
      * content passed within the HTTP request body, and the media type passed as HeaderField
      * â€œContent-Typeâ€�. Use MediaType.WILDCARD to declare consumption of an a priori
@@ -248,7 +248,8 @@ public class PersonService implements PersistenceManagerFactoryContainer {
 
             entityManager.getTransaction().begin();
 
-            if (body == null) { // TODO set avatar default
+            // set avatar default
+            if (body == null) {
                 person.setAvatar(entityManager.find(Document.class, 1L));
             } else if (doc == null) {
                 doc = new Document();
