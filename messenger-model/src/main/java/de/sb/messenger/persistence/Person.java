@@ -58,7 +58,7 @@ public class Person extends BaseEntity{
 	
 	@Nullable
 	@OneToMany(mappedBy = "author", cascade = {CascadeType.REMOVE, CascadeType.REFRESH})
-	public Set<Message> messagesAuthored;
+	private Set<Message> messagesAuthored;
 	
 	@NotNull
 	@ManyToOne

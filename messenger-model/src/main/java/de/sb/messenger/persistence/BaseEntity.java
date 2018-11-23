@@ -15,13 +15,13 @@ public class BaseEntity implements Comparable<BaseEntity>{
 	
 	@Id
 	@NotNull
-	@Column(name = "identity")
+	@Column(name = "identity", nullable=false, updatable=false, insertable=false)
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long identity;
 	
 	@NotNull
 	@Positive
-	@Column(name = "version")
+	@Column(name = "version",)
 	private int version;
 	
 	@NotNull

@@ -110,7 +110,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
                 try {
                     // when the person does not exist create a new one and set the avatar default
                     if (entityManager.find(Person.class, personTemplate.getIdentity()) == null) {
-                        personTemplate.avatar = entityManager.find(Document.class, 1L);
+                        personTemplate.setAvatar(entityManager.find(Document.class, 1L));
                         entityManager.persist(personTemplate);
                     } else { // otherwise this is an update so pls merge
                         entityManager.merge(personTemplate);
@@ -249,12 +249,15 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             entityManager.getTransaction().begin();
 
             if (body == null) { // TODO set avatar default
-                person.avatar = entityManager.find(Document.class, 1L);
-            } else if (doc != null) {
-                person.avatar = doc;
-            } else {
-                person.avatar = new Document(HashTools.sha256HashCode(body), body, type);
+                person.setAvatar(entityManager.find(Document.class, 1L));
+            } else if (doc == null) {
+                doc = new Document();
+                doc.setContent(body);
+                doc.setContentType(type);
             }
+
+            person.setAvatar(doc);
+
             entityManager.merge(person);
             try {
                 entityManager.getTransaction().commit();
@@ -270,14 +273,14 @@ public class PersonService implements PersistenceManagerFactoryContainer {
     }
 
     /**
-     * TODO: GET /people/{id}/messagesAuthored
+     * GET /people/{id}/messagesAuthored
      * Returns the messages authored by the
      * person matching the given identity, sorted by identity
      */
     @GET
     @Path("{id}/messagesAuthored")
     @Produces({APPLICATION_JSON, APPLICATION_XML})
-    public Message[] queryPersonMessages(
+    public Collection<Message> queryPersonMessages(
             @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
             @PathParam("id") @Positive final long entityIdentity) {
         final EntityManager entityManager = entityManagerFactory.createEntityManager();
@@ -291,11 +294,12 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             throw new ClientErrorException(NOT_FOUND);
 
         entityManager.close();
-        return person.messagesAuthored.toArray(new Message[person.messagesAuthored.size()]);
+
+        return person.getMessagesAuthored();
     }
 
     /**
-     * TODO: PUT /people/{id}/peopleObserved
+     * PUT /people/{id}/peopleObserved
      * Updates the given person to monitor the
      * people matching the form-supplied collection of person identities in application/x-wwwform-urlencoded
      * format, meaning as multiple form-entries sharing the same name.
@@ -305,7 +309,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
     @PUT
     @Path("{id}/peopleObserved")
     @Produces({APPLICATION_JSON, APPLICATION_XML})
-    public Person[] updatePeopleObserved(
+    public Collection<Person> updatePeopleObserved(
             @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
             @PathParam("id") @Positive final long entityIdentity) {
 
@@ -321,6 +325,6 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             throw new ClientErrorException(NOT_FOUND);
 
         entityManager.close();
-        return person.getPeopleObserved().toArray(new Person[person.getPeopleObserved().size()]);
+        return person.getPeopleObserved();
     }
 }
