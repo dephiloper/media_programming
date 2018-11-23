@@ -11,8 +11,6 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlTransient;
 
-import de.sb.messenger.persistence.Message;
-
 @Table(name = "BaseEntity", schema = "messenger")
 @Entity
 @Inheritance(strategy=InheritanceType.JOINED)
@@ -22,7 +20,7 @@ public class BaseEntity implements Comparable<BaseEntity>{
 	
 	@Id
 	@NotNull
-	@Column(name = "identity")
+	@Column(name = "identity", nullable=false, updatable=false, insertable=false)
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long identity;
 	
@@ -35,7 +33,7 @@ public class BaseEntity implements Comparable<BaseEntity>{
 	@PositiveOrZero
 	@Column(name = "creationTimestamp")
 	private long creationTimestamp;
-	
+
 	@OneToMany
 	@JoinColumn()
 	public Set<Message> messagesCaused;

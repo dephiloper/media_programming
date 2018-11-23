@@ -36,18 +36,18 @@ import java.util.Comparator;
 		return street;
 	}
 
-	public void setStreet(String street) {
-		this.street = street;
-	}
+    public void setStreet(String street) {
+        this.street = street;
+    }
 
 	@JsonbProperty @XmlAttribute
 	public String getPostcode() {
 		return postcode;
 	}
 
-	public void setPostcode(String postcode) {
-		this.postcode = postcode;
-	}
+    public void setPostcode(String postcode) {
+        this.postcode = postcode;
+    }
 
 	@JsonbProperty @XmlAttribute
 	public String getCity() {

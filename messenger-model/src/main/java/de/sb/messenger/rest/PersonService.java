@@ -13,14 +13,24 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
+import static de.sb.messenger.persistence.Group.USER;
 import static de.sb.messenger.rest.BasicAuthenticationFilter.REQUESTER_IDENTITY;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;
 
 @Path("people")
 @Copyright(year = 2018, holders = "Gruppe Drei (Gruppe 5)")
-public class PersonService implements PersistenceManagerFactoryContainer{
+public class PersonService implements PersistenceManagerFactoryContainer {
     private static final Comparator<Person> personComparator = Comparator.comparing(Person::getName).thenComparing(Person::getEmail);
+
+    private static final String QUERY_STRING = "SELECT p from Person as p WHERE "
+            + "(:familyName is null or p.familyName = :familyName) and "
+            + "(:givenName is null or p.givenName = :givenName) and "
+            + "(:email is null or p.email = :email) and "
+            + "(:street is null or p.street = :street) and "
+            + "(:city is null or p.city = :city) and "
+            + "(:postCode is null or p.postCode) and "
+            + "(:group is null or p.group = :group)";
 
     /**
      * Returns the people matching the given filter criteria, with missing
@@ -29,38 +39,26 @@ public class PersonService implements PersistenceManagerFactoryContainer{
      * identity and password, plus resultOffset and resultLimit which define a result range.
      */
     @GET
-    @Produces({ APPLICATION_JSON, APPLICATION_XML })
-    public Collection<Person> queryPeople (
-    		// Default Values?
-    		@QueryParam("resultOffset") int resultOffset,
-    		@QueryParam("resultLimit") int resultLimit,
-   			@QueryParam("familyName") String familyName, 
-   			@QueryParam("givenName") String givenName, 
-   			@QueryParam("email") String email,
-   			@QueryParam("street") String street,
-   			@QueryParam("postCode") String postCode,
-   			@QueryParam("city") String city,
-   			@QueryParam("group") String group){
-    		
-    	final EntityManager entityManager = entityManagerFactory.createEntityManager();
-    	
-    	Person [] people;
-    	// query maybe static
-    	String queryString = "SELECT p from Person as p WHERE "
-    			           + "(:familyName is null or p.familyName = :familyName) and "
-    					   + "(:givenName is null or p.givenName = :givenName) and "
-    					   + "(:email is null or p.email = :email) and "
-    					   + "(:street is null or p.street = :street) and "
-    					   + "(:city is null or p.city = :city) and "
-    					   + "(:postCode is null or p.postCode) and "
-    					   + "(:group is null or p.group = :group)";
-    	
-    	
-    	TypedQuery<Person> query = entityManager.createQuery(queryString, Person.class);
+    @Produces({APPLICATION_JSON, APPLICATION_XML})
+    public Collection<Person> queryPeople(
+            // Default Values?
+            @QueryParam("resultOffset") int resultOffset,
+            @QueryParam("resultLimit") int resultLimit,
+            @QueryParam("familyName") String familyName,
+            @QueryParam("givenName") String givenName,
+            @QueryParam("email") String email,
+            @QueryParam("street") String street,
+            @QueryParam("postCode") String postCode,
+            @QueryParam("city") String city,
+            @QueryParam("group") String group) {
 
-    	if (resultOffset>0) query.setFirstResult(resultOffset);
-    	if (resultLimit>0) query.setMaxResults(resultLimit);
-    	if (familyName != null) query.setParameter("familyName", familyName);
+        final EntityManager entityManager = entityManagerFactory.createEntityManager();
+
+        TypedQuery<Person> query = entityManager.createQuery(QUERY_STRING, Person.class);
+
+        if (resultOffset > 0) query.setFirstResult(resultOffset);
+        if (resultLimit > 0) query.setMaxResults(resultLimit);
+        if (familyName != null) query.setParameter("familyName", familyName);
         if (givenName != null) query.setParameter("givenName", givenName);
         if (email != null) query.setParameter("email", email);
         if (street != null) query.setParameter("street", street);
@@ -78,90 +76,90 @@ public class PersonService implements PersistenceManagerFactoryContainer{
     }
 
     /**
+     * POST /people
      * Creates or updates a person from template data within the HTTP request body in application/json format.
      * It creates a new person if the given template' identity is zero, otherwise it updates the corresponding
-     * person with the given data. Use the Header field â€œRequester-Identityâ€� to make sure the requester is either
-     * the person to be modified, or an administrator â€“ this header field will later be supplied during
-     * authentication. Also, make sure non-administrators donâ€™t set their Group to ADMIN.
-     * Optionally, a new password may be set using the header field â€œSet-Passwordâ€�. Returns
+     * person with the given data. Use the Header field Requester-Identity to make sure the requester is either
+     * the person to be modified, or an administrator this header field will later be supplied during
+     * authentication. Also, make sure non-administrators don't set their Group to ADMIN.
+     * Optionally, a new password may be set using the header field â€œSet-Password. Returns
      * the affected person's identity as text/plain
+     * ADMIN, USER
      */
     @POST
-    @Consumes({ APPLICATION_JSON })
-    @Produces({ TEXT_PLAIN })
+    @Consumes({APPLICATION_JSON})
+    @Produces({TEXT_PLAIN})
     public long createUpdatePerson(
             @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
             @HeaderParam("Set-Password") String setPassword,
             Person personTemplate) {
 
-        // TODO: method can probably be simplified
-
+        long affectedPersonId = -1;
         final EntityManager entityManager = entityManagerFactory.createEntityManager();
         Person requester = entityManager.find(Person.class, requesterIdentity);
 
         // check if requester is null
         if (requester == null) throw new ClientErrorException(FORBIDDEN);
-        // TODO check if requester is user
-        final Person person;
-        final boolean insertMode = personTemplate.getIdentity() == 0;
-        if(insertMode) {
-        	final Document avatar = null;
-        	person = new Person(avatar);
-        } else {
-        	person = entityManager.find(Person.class, personTemplate.getIdentity()); 
+
+
+        switch (requester.getGroup()) {
+            // check if requester is Admin
+            case ADMIN:
+                entityManager.getTransaction().begin();
+
+                try {
+                    // when the person does not exist create a new one and set the avatar default
+                    if (entityManager.find(Person.class, personTemplate.getIdentity()) == null) {
+                        personTemplate.setAvatar(entityManager.find(Document.class, 1L));
+                        entityManager.persist(personTemplate);
+                    } else { // otherwise this is an update so pls merge
+                        entityManager.merge(personTemplate);
+                    }
+
+                    entityManager.getTransaction().commit();
+                    affectedPersonId = personTemplate.getIdentity();
+                } catch (final RollbackException exception) {
+                    throw new ClientErrorException(CONFLICT);
+                } finally {
+                    entityManager.getTransaction().rollback();
+                }
+                break;
+            // you are a user
+            case USER:
+                if (requesterIdentity != personTemplate.getIdentity()) throw new ClientErrorException(UNAUTHORIZED);
+
+                // set group always to user if requester is a user on his own
+                personTemplate.setGroup(USER);
+                entityManager.getTransaction().begin();
+
+                // merge the user with his new data
+                try {
+                    entityManager.merge(personTemplate);
+                    entityManager.getTransaction().commit();
+                    affectedPersonId = personTemplate.getIdentity();
+                } catch (final RollbackException exception) {
+                    throw new ClientErrorException(CONFLICT);
+                } finally {
+                    entityManager.getTransaction().rollback();
+                }
+
+                break;
         }
-        // TODO set all attributes from 
-        // TODO if else (isertmode) persist !insertmode flush
-        // TODO commit
-        // creates person if requester is admin
-        if (personTemplate.getIdentity() == 0 && requester.getGroup() == Group.ADMIN) {
-            //TODO set password: setPassword
-            entityManager.getTransaction().begin();
-            entityManager.persist(person);
 
-            try {
-                entityManager.getTransaction().commit();
-            } catch (final RollbackException exception) {
-                throw new ClientErrorException(CONFLICT);
-            } finally {
-                entityManager.getTransaction().rollback();
-            }
-
-        }
-        // (see description above) Use the Header field â€œRequester-Identityâ€� to make sure the requester is either
-        // the person to be modified, or an administrator
-        else if (person.getIdentity() == requesterIdentity || requester.getGroup() == Group.ADMIN) {
-
-            if (requester.getGroup() != Group.ADMIN)
-                person.setGroup(Group.USER);
-
-            //TODO set password: setPassword
-            entityManager.getTransaction().begin();
-            entityManager.merge(person);
-
-            try {
-                entityManager.getTransaction().commit();
-            } catch (final RollbackException exception) {
-                throw new ClientErrorException(CONFLICT);
-            } finally {
-                entityManager.getTransaction().rollback();
-            }
-        }
-
-        entityManager.close();
-        return person.getIdentity();
+        return affectedPersonId;
     }
 
 
     /**
+     * GET /people/{id}
      * Returns the person matching the given identity, or the person
      * matching the given header field â€œRequester-Identityâ€� if the former is zero. The header
      * field will later be injected during successful authentication.
      */
     @GET
     @Path("{id}")
-    @Produces({ APPLICATION_JSON, APPLICATION_XML })
-    public Person queryPerson (
+    @Produces({APPLICATION_JSON, APPLICATION_XML})
+    public Person queryPerson(
             @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
             @PathParam("id") @Positive final long entityIdentity) {
         final EntityManager entityManager = entityManagerFactory.createEntityManager();
@@ -174,8 +172,9 @@ public class PersonService implements PersistenceManagerFactoryContainer{
         return person;
     }
 
+
     /**
-     * TODO: GET /people/{id}/avatar
+     * GET /people/{id}/avatar
      * Returns the avatar content of the person matching the
      * given identity, plus it's content type as part of the HTTP response header. Use
      * MediaType.WILDCARD to declare production of an a priori unknown media type, and return
@@ -185,8 +184,8 @@ public class PersonService implements PersistenceManagerFactoryContainer{
      */
     @GET
     @Path("{id}/avatar")
-    @Produces({ WILDCARD })
-    public Response queryAvatar (
+    @Produces({WILDCARD})
+    public Response queryAvatar(
             @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
             @PathParam("id") @Positive final long entityIdentity,
             @QueryParam("width") final long width,
@@ -228,35 +227,38 @@ public class PersonService implements PersistenceManagerFactoryContainer{
     @Path("{id}/avatar")
     @Consumes({APPLICATION_JSON, WILDCARD})
     public long updateAvatar(
-    		@PathParam("id") final long personIdentity,
-    		@HeaderParam(REQUESTER_IDENTITY) final long requesterIdentity,
-    		@HeaderParam("Content-Type") String type, byte[] body) {
-    	
-    	final EntityManager entityManager = entityManagerFactory.createEntityManager();
+            @PathParam("id") final long personIdentity,
+            @HeaderParam(REQUESTER_IDENTITY) final long requesterIdentity,
+            @HeaderParam("Content-Type") String type, byte[] body) {
+
+        final EntityManager entityManager = entityManagerFactory.createEntityManager();
         Person requester = entityManager.find(Person.class, requesterIdentity);
         Person person = entityManager.find(Person.class, personIdentity);
-        
+
         if (requester == null)
             throw new ClientErrorException(NOT_FOUND);
-        
+
         if (person == null) {
-        	throw new ClientErrorException(NOT_FOUND);
+            throw new ClientErrorException(NOT_FOUND);
         } else if (personIdentity == requesterIdentity || requester.getGroup() == Group.ADMIN) {
         	        	
         	// if a Document is found, the request body contains the exact picture which can be found in the database
         	List<Document> docs = entityManager.createQuery("SELECT doc from Document doc WHERE contentHash =" + HashTools.sha256HashCode(body), Document.class).getResultList();
             Document doc = docs.get(0);
-        	
-        	entityManager.getTransaction().begin();
-            
+
+            entityManager.getTransaction().begin();
+
             if (body == null) { // TODO set avatar default
-            	person.avatar = entityManager.find(Document.class, 1L);
-            } else if (doc != null) {
-            	person.avatar = doc;
-            } else {
-            	person.avatar = new Document(HashTools.sha256HashCode(body), body, type);
-            }	
-            	entityManager.merge(person);
+                person.setAvatar(entityManager.find(Document.class, 1L));
+            } else if (doc == null) {
+                doc = new Document();
+                doc.setContent(body);
+                doc.setContentType(type);
+            }
+
+            person.setAvatar(doc);
+
+            entityManager.merge(person);
             try {
                 entityManager.getTransaction().commit();
             } catch (final RollbackException exception) {
@@ -271,32 +273,33 @@ public class PersonService implements PersistenceManagerFactoryContainer{
     }
 
     /**
-     * TODO: GET /people/{id}/messagesAuthored
+     * GET /people/{id}/messagesAuthored
      * Returns the messages authored by the
      * person matching the given identity, sorted by identity
      */
     @GET
     @Path("{id}/messagesAuthored")
-    @Produces({ APPLICATION_JSON, APPLICATION_XML })
-    public Message[] queryPersonMessages (
+    @Produces({APPLICATION_JSON, APPLICATION_XML})
+    public Collection<Message> queryPersonMessages(
             @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
             @PathParam("id") @Positive final long entityIdentity) {
-    	final EntityManager entityManager = entityManagerFactory.createEntityManager();
+        final EntityManager entityManager = entityManagerFactory.createEntityManager();
         Person person = entityManager.find(Person.class, entityIdentity);
         Person requester = entityManager.find(Person.class, requesterIdentity);
-        
-    	if (requesterIdentity == entityIdentity || requester.getGroup() == Group.ADMIN)
-    		person = entityManager.find(Person.class, entityIdentity);
-    	
+
+        if (requesterIdentity == entityIdentity || requester.getGroup() == Group.ADMIN)
+            person = entityManager.find(Person.class, entityIdentity);
+
         if (person == null)
             throw new ClientErrorException(NOT_FOUND);
 
         entityManager.close();
-        return person.messagesAuthored.toArray(new Message[person.messagesAuthored.size()]);
+
+        return person.getMessagesAuthored();
     }
 
     /**
-     * TODO: PUT /people/{id}/peopleObserved
+     * PUT /people/{id}/peopleObserved
      * Updates the given person to monitor the
      * people matching the form-supplied collection of person identities in application/x-wwwform-urlencoded
      * format, meaning as multiple form-entries sharing the same name.
@@ -305,22 +308,23 @@ public class PersonService implements PersistenceManagerFactoryContainer{
      */
     @PUT
     @Path("{id}/peopleObserved")
-    @Produces({ APPLICATION_JSON, APPLICATION_XML })
-    public Person[] updatePeopleObserved (
+    @Produces({APPLICATION_JSON, APPLICATION_XML})
+    public Collection<Person> updatePeopleObserved(
             @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
             @PathParam("id") @Positive final long entityIdentity) {
-    	
-    	final EntityManager entityManager = entityManagerFactory.createEntityManager();
+
+        final EntityManager entityManager = entityManagerFactory.createEntityManager();
         Person requester = entityManager.find(Person.class, requesterIdentity);
-        Person person = new Person(new Document(){}); 
-    	
-    	if (requesterIdentity == entityIdentity || requester.getGroup() == Group.ADMIN)
-    		person = entityManager.find(Person.class, entityIdentity);
-        
+        Person person = new Person(new Document() {
+        });
+
+        if (requesterIdentity == entityIdentity || requester.getGroup() == Group.ADMIN)
+            person = entityManager.find(Person.class, entityIdentity);
+
         if (person == null)
             throw new ClientErrorException(NOT_FOUND);
 
         entityManager.close();
-        return person.getPeopleObserved().toArray(new Person[person.getPeopleObserved().size()]);
+        return person.getPeopleObserved();
     }
 }

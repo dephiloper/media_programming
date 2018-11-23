@@ -1,6 +1,5 @@
 package de.sb.messenger.persistence;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -58,11 +57,11 @@ public class Person extends BaseEntity{
 	private Group group;
 	
 	@NotNull
-	@ManyToMany(mappedBy = "peopleObserved", cascade = {}) // TODO remove refresh ...
+	@ManyToMany(mappedBy = "peopleObserved", cascade = {CascadeType.REMOVE, CascadeType.REFRESH})
 	private Set<Person> peopleObserving;
 	
 	@Nullable
-	@OneToMany(mappedBy = "author", cascade = {CascadeType.REMOVE}) // TODO refresh ...
+	@OneToMany(mappedBy = "author", cascade = {CascadeType.REMOVE, CascadeType.REFRESH})
 	private Set<Message> messagesAuthored;
 	
 	@NotNull
