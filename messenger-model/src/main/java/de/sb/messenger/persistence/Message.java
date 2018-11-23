@@ -15,15 +15,15 @@ import javax.xml.bind.annotation.XmlTransient;
 @JsonbVisibility(JsonProtectedPropertyStrategy.class)
 public class Message extends BaseEntity {
 
-	@Column(name = "body")
+	@Column(nullable = true, updatable = true)
 	private String body;
 	
 	@ManyToOne
-	@JoinColumn(name = "authorReference", nullable=false, updatable=false, insertable=true)
+	@JoinColumn(name = "authorReference", nullable=false, updatable=false)
 	private Person author;
 	
 	@ManyToOne
-	@JoinColumn(name = "subjectReference", nullable=false, updatable=false, insertable=true)
+	@JoinColumn(name = "subjectReference", nullable=false, updatable=false)
 	private BaseEntity subject;
 	
 	protected Message() {

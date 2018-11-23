@@ -18,17 +18,17 @@ import java.util.Comparator;
 
 	@Size(min = 1, max = 63)
 	@Nullable
-	@Column(name = "street", updatable= true)
+	@Column(nullable = false, updatable = true)
 	private String street;
 	
 	@Size(min = 1, max = 15)
 	@Nullable
-	@Column(name = "postcode", updatable= true)
+	@Column(nullable = false, updatable = true)
 	private String postcode;
 	
 	@Size(min = 1, max = 63)
 	@NotNull
-	@Column(name = "city", nullable=false, updatable= true)
+	@Column(nullable=false, updatable = true)
 	private String city;
 
 	@JsonbProperty @XmlAttribute

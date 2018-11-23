@@ -14,7 +14,7 @@ public class Name implements Comparable<Name>{
 	
 	@Size(min = 1, max = 31)
 	@NotNull
-	@Column(name = "forename", nullable=false, updatable=true) // TODO overdo insertable when updatable = false
+	@Column(name = "forename", nullable=false, updatable=true)
 	private String given;
 
 	public String getFamily() {

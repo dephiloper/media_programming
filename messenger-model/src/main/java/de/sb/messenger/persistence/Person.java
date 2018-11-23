@@ -14,6 +14,30 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import com.sun.istack.internal.Nullable;
 
+/*
+
+        ___
+    . -^   `--,
+   /# =========`-_
+  /# (--====___====\
+ /#   .- --.  . --.|
+/##   |  * ) (   * ),
+|##   \    /\ \   / |
+|###   ---   \ ---  |
+|####      ___)    #|
+|######           ##|
+ \##### ---------- /
+  \####           (
+   `\###          |
+     \###         |
+      \##        |
+       \###.    .)
+        `======/
+
+        SHOW ME WHAT YOU GOT!
+
+ */
+
 @Table(name = "Person", schema = "messenger")
 @Entity
 @PrimaryKeyJoinColumn(name = "personIdentity")
@@ -25,12 +49,12 @@ public class Person extends BaseEntity{
 	
 	@Size(min = 1, max = 128)
 	@NotNull
-	@Column(name = "email")
+	@Column(nullable = true, updatable = true)
 	private String email;
 	
 	@Size(min = 32, max = 32)
 	@NotNull
-	@Column(name = "passwordHash")
+	@Column(nullable = false, updatable = true)
 	private byte[] passwordHash;
 	
 	@NotNull
