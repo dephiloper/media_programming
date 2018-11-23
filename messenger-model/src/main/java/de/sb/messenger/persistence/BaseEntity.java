@@ -2,8 +2,14 @@ package de.sb.messenger.persistence;
 
 import java.util.HashSet;
 import java.util.Set;
+import javax.json.bind.annotation.JsonbProperty;
+import javax.json.bind.annotation.JsonbTransient;
 import javax.persistence.*;
 import javax.validation.constraints.*;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlTransient;
 
 import de.sb.messenger.persistence.Message;
 
@@ -11,6 +17,7 @@ import de.sb.messenger.persistence.Message;
 @Entity
 @Inheritance(strategy=InheritanceType.JOINED)
 @DiscriminatorColumn(name="discriminator")
+@XmlAccessorType(XmlAccessType.NONE)
 public class BaseEntity implements Comparable<BaseEntity>{
 	
 	@Id
@@ -43,7 +50,8 @@ public class BaseEntity implements Comparable<BaseEntity>{
 		this.version = version;
 		this.messagesCaused = messagesCaused;
 	}
-	
+
+	@JsonbProperty @XmlAttribute
 	public long getIdentity() {
 		return this.identity;
 	}
@@ -51,7 +59,8 @@ public class BaseEntity implements Comparable<BaseEntity>{
 	protected void setIdentity(long identity) {
 		this.identity = identity;
 	}
-	
+
+	@JsonbProperty @XmlAttribute
 	public int getVersion() {
 		return this.version;
 	} 
@@ -59,7 +68,8 @@ public class BaseEntity implements Comparable<BaseEntity>{
 	protected void setVersion(int version) {
 		this.version = version;
 	}
-	
+
+	@JsonbProperty @XmlAttribute
 	public long getCreationTimestamp() {
 		return this.creationTimestamp;
 	}
@@ -67,7 +77,8 @@ public class BaseEntity implements Comparable<BaseEntity>{
 	protected void setCreationTimestamp(long creationTimestamp) {
 		this.creationTimestamp = creationTimestamp;
 	}
-	
+
+	@JsonbTransient @XmlTransient
 	public Set<Message> getMessagesCaused(){
 		return messagesCaused;
 	}

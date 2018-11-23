@@ -135,7 +135,7 @@ public class MessageService implements PersistenceManagerFactoryContainer {
             throw new ClientErrorException(BAD_REQUEST);
         }
 
-        Message message = new Message(body, author, subject);
+        Message message = new Message(author, subject);
         entityManager.getTransaction().begin();
         entityManager.persist(message);
         entityManager.flush();

@@ -1,12 +1,17 @@
 package de.sb.messenger.persistence;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
+import javax.json.bind.annotation.JsonbProperty;
+import javax.json.bind.annotation.JsonbTransient;
 import javax.persistence.*;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 import com.sun.istack.internal.Nullable;
 
@@ -83,7 +88,8 @@ public class Person extends BaseEntity{
 	}
 	
 	// methods
-	
+
+    @JsonbProperty @XmlAttribute
 	public String getEmail() {
 		return this.email;
 	}
@@ -91,23 +97,41 @@ public class Person extends BaseEntity{
 	public void setEmail(String mail) {
 		this.email = mail;
 	}
-	
+
+	@JsonbTransient @XmlTransient
 	public Document getAvatar() {
 		return this.avatar;
+	}
+
+	@JsonbProperty @XmlAttribute
+	public long getAvatarReference() {
+		if (avatar == null) return 0;
+		return this.avatar.getIdentity();
 	}
 	
 	public void setAvatar(Document doc) {
 		this.avatar = doc;
 	}
-	
+
+	@JsonbTransient @XmlTransient
 	public Set<Person> getPeopleObserving(){
 		return this.peopleObserving;
+	}
+
+	@JsonbProperty @XmlElement
+	public HashSet<Long> getPeopleOvservingReference() {
+		HashSet<Long> references = new HashSet<>();
+		for (Person p : peopleObserved)
+			references.add(p.getIdentity());
+		return references;
 	}
 	
 	protected void setPeopleObserving(Set<Person> peopleObserving) {
 		this.peopleObserving = peopleObserving;
 	}
-	
+
+
+	@JsonbTransient @XmlTransient
 	public Set<Person> getPeopleObserved(){
 		return this.peopleObserved;
 	}
@@ -115,7 +139,8 @@ public class Person extends BaseEntity{
 	protected void setPeopleObserved(Set<Person> peopleObserved) {
 		this.peopleObserved = peopleObserved;
 	}
-	
+
+	@JsonbTransient @XmlTransient
 	public byte[] getPasswordHash() {
 		return passwordHash;
 	}
@@ -123,15 +148,25 @@ public class Person extends BaseEntity{
 	public void setPasswordHash(byte[] hash) {
 		this.passwordHash = hash;
 	}
-	
+
+	@JsonbTransient @XmlTransient
 	public Set<Message> getMessagesAuthored(){
 		return this.messagesAuthored;
+	}
+
+	@JsonbProperty @XmlElement
+	public HashSet<Long> getMessagesAuthoredReferences() {
+		HashSet<Long> references = new HashSet<>();
+		for (Message m : messagesAuthored)
+			references.add(m.getIdentity());
+		return references;
 	}
 	
 	protected void setMessagesAuthored(Set<Message> messagesAuthored){
 		this.messagesAuthored = messagesAuthored;
 	}
-	
+
+	@JsonbProperty @XmlAttribute
 	public Group getGroup() {
 		return this.group;
 	}
@@ -139,11 +174,13 @@ public class Person extends BaseEntity{
 	public void setGroup(Group group) {
 		this.group = group;
 	}
-	
+
+	@JsonbProperty @XmlElement
 	public Name getName() {
 		return this.name;
 	}
-	
+
+	@JsonbProperty @XmlElement
 	public Address getAddress() {
 		return this.address;
 	}

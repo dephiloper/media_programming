@@ -1,13 +1,21 @@
 package de.sb.messenger.persistence;
 
+import javax.json.bind.annotation.JsonbProperty;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import javax.xml.bind.annotation.XmlAttribute;
 
 import com.sun.istack.internal.Nullable;
 
+import java.util.Comparator;
+
 @Embeddable class Address implements Comparable<Address> {
+	private static final Comparator<Address> ADDRESS_COMPARATOR = Comparator.comparing(Address::getPostcode)
+			.thenComparing(Address::getCity)
+			.thenComparing(Address::getStreet);
+
 	@Size(min = 1, max = 63)
 	@Nullable
 	@Column(name = "street", updatable= true)
@@ -23,6 +31,7 @@ import com.sun.istack.internal.Nullable;
 	@Column(name = "city", nullable=false, updatable= true)
 	private String city;
 
+	@JsonbProperty @XmlAttribute
 	public String getStreet() {
 		return street;
 	}
@@ -31,6 +40,7 @@ import com.sun.istack.internal.Nullable;
 		this.street = street;
 	}
 
+	@JsonbProperty @XmlAttribute
 	public String getPostcode() {
 		return postcode;
 	}
@@ -39,6 +49,7 @@ import com.sun.istack.internal.Nullable;
 		this.postcode = postcode;
 	}
 
+	@JsonbProperty @XmlAttribute
 	public String getCity() {
 		return city;
 	}
@@ -48,22 +59,7 @@ import com.sun.istack.internal.Nullable;
 	}
 	
 	@Override
-	public int compareTo(Address arg0) {
-		String address = postcode + city + street;
-		String addressComp = arg0.postcode + arg0.city + arg0.street;
-		for (int i = 0; i < address.length(); i++) {
-			if(address.charAt(i) < addressComp.charAt(i))
-				return -1;
-			if(address.charAt(i) > addressComp.charAt(i))
-				return 1;
-		}
-
-		if (address.length()< addressComp.length())
-			return -1;
-		if (address.length()> addressComp.length())
-			return 1;
-		return 0;
-		
-		// TODO possible with String.compareToString
+	public int compareTo(Address other) {
+		return ADDRESS_COMPARATOR.compare(this, other);
 	}
 }

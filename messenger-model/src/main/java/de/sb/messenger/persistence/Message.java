@@ -58,7 +58,17 @@ public class Message extends BaseEntity {
 		return subject;
 	}
 
-	// TODO getAuthorReference and getSubjectReference, wenn Value=null dann Reference=0
+	@JsonbProperty @XmlAttribute
+	public long getAuthorReference() {
+		if (author == null) return 0;
+		return author.getIdentity();
+	}
+
+	@JsonbProperty @XmlAttribute
+	public long getSubjectReference() {
+		if (subject == null) return 0;
+		return subject.getIdentity();
+	}
 
 	protected void setSubject(BaseEntity subject) {
 		this.subject = subject;

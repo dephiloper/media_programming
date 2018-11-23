@@ -73,5 +73,4 @@ public class Document extends BaseEntity {
 	public void setContentType(String contentType) {
 		this.contentType = contentType;
 	}
-	
 }
