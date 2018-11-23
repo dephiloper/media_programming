@@ -53,17 +53,17 @@ public class Person extends BaseEntity{
 	private Group group;
 	
 	@NotNull
-	@ManyToMany(mappedBy = "peopleObserved", cascade = {}) // TODO remove refresh ...
+	@ManyToMany(mappedBy = "peopleObserved", cascade = {CascadeType.REMOVE, CascadeType.REFRESH})
 	public Set<Person> peopleObserving;
 	
 	@Nullable
-	@OneToMany(mappedBy = "author", cascade = {CascadeType.REMOVE}) // TODO refresh ...
+	@OneToMany(mappedBy = "author", cascade = {CascadeType.REMOVE, CascadeType.REFRESH})
 	public Set<Message> messagesAuthored;
 	
 	@NotNull
 	@ManyToOne
 	@JoinColumn(name = "avatarReference", referencedColumnName = "documentIdentity")
-	public Document avatar; // TODO is public correct?
+	public Document avatar;
 	
 	// constructors
 	

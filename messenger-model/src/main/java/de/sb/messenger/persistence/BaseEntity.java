@@ -28,7 +28,7 @@ public class BaseEntity implements Comparable<BaseEntity>{
 	@PositiveOrZero
 	@Column(name = "creationTimestamp")
 	private long creationTimestamp;
-	
+
 	@OneToMany
 	@JoinColumn()
 	public Set<Message> messagesCaused;

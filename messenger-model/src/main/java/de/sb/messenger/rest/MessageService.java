@@ -108,7 +108,6 @@ public class MessageService implements PersistenceManagerFactoryContainer {
     }
 
     /**
-     * TODO: POST /messages
      * Creates a new message, using an HTTP form as a body
      * parameter (content type "application/x-www-form-urlencoded") with the fields “body”
      * (message body) and “subjectReference” (message subject), and Header field
