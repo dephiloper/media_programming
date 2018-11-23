@@ -5,7 +5,7 @@ import javax.persistence.*;
 @Table(name = "Message", schema = "messenger")
 @Entity
 @PrimaryKeyJoinColumn(name = "messageIdentity")
-public class Message extends BaseEntity{
+public class Message extends BaseEntity {
 
 	@Column(name = "body")
 	private String body;

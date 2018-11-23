@@ -1,6 +1,7 @@
 package de.sb.messenger.persistence;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.*;
@@ -145,5 +146,12 @@ public class Person extends BaseEntity{
 	
 	public Address getAddress() {
 		return this.address;
+	}
+	
+	public static class NameComparator implements Comparator<Person> {
+	    @Override
+	    public int compare(Person a, Person b) {
+	        return a.name.compareTo(b.name);
+	    }
 	}
 }

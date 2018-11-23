@@ -5,13 +5,14 @@ import de.sb.messenger.persistence.Message;
 import de.sb.messenger.persistence.Person;
 import de.sb.toolbox.Copyright;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
-import javax.persistence.Query;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.ws.rs.*;
+
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -19,13 +20,11 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 @Path("messages")
 @Copyright(year = 2018, holders = "Gruppe Drei (Gruppe 5)")
-// TODO implement PersistenceManagerFactoryContainer
-public class MessageService {
+public class MessageService implements PersistenceManagerFactoryContainer {
     private static final EntityManagerFactory entityManagerFactory =
             Persistence.createEntityManagerFactory("messenger");
 
     /**
-     * TODO: GET /messages
      * Returns the messages matching the given criteria, with missing
      * parameters identifying omitted criteria, sorted by identity. Search criteria should be a
      * message body fragment (compare using the like operator), an upper/lower creation
@@ -33,9 +32,7 @@ public class MessageService {
      */
     @GET
     @Produces({ APPLICATION_JSON, APPLICATION_XML })
-    // TODO Collection<Message>
-    // na findest du mich? Ich hab mich hier versteckt und du weist es nicht. hihi. wir sind kleine strolche!
-    public Message[] queryMessages(
+    public Collection<Message> queryMessages(
         @QueryParam("fragment") String fragment,
         @QueryParam("lowerCreationTimestamp") Long lowerCreationTimestamp,
         @QueryParam("upperCreationTimestamp") Long upperCreationTimestamp,
@@ -71,7 +68,7 @@ public class MessageService {
 
         String queryString = queryStrings.toString();
 
-        Query query = entityManager.createQuery(queryString);
+        TypedQuery<Message> query = entityManager.createQuery(queryString, Message.class);
 
         if (resultOffset != null)
             query.setFirstResult(resultOffset);
@@ -87,12 +84,13 @@ public class MessageService {
 
         entityManager.close();
 
-        // TODO sort
-        return (Message[])query.getResultList().toArray();
+        List<Message> messageList = query.getResultList();
+        messageList.sort(Comparator.comparing(Message::getIdentity));
+
+        return messageList;
     }
 
     /**
-     * TODO: GET /messages/{id}
      * Returns the message matching the given identity.
      */
     @GET
@@ -149,7 +147,6 @@ public class MessageService {
     }
 
     /*
-     * TODO: Appendix
      * Sind dabei Filter-Queries gefordert, so definiert als Query-Parameter ein Suchkriterium
      * pro textuellem Entity-Feld, und zwei für numerische Felder (für >= und <= Vergleich).
      * Definiert zudem einen JP-QL Query nach folgendem Muster (statt „=“ kann für mehr
