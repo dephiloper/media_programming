@@ -21,6 +21,7 @@ import static javax.ws.rs.core.Response.Status.*;
 @Path("people")
 @Copyright(year = 2018, holders = "Gruppe Drei (Gruppe 5)")
 public class PersonService implements PersistenceManagerFactoryContainer {
+    private static final Comparator<Person> personComparator = Comparator.comparing(Person::getName).thenComparing(Person::getEmail);
 
     private static final String QUERY_STRING = "SELECT p from Person as p WHERE "
             + "(:familyName is null or p.familyName = :familyName) and "
@@ -65,15 +66,13 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         if (city != null) query.setParameter("city", city);
         if (group != null) query.setParameter("group", group);
 
-        query.setParameter("familyName", familyName);
-        List<Person> peopleList = query.getResultList();
-
-        peopleList.sort(Comparator.comparing(Person::getName).thenComparing(Person::getEmail));
-
-        //TODO try catch -finally-
-        entityManager.close();
-
-        return peopleList;
+        try {
+            List<Person> peopleList = query.getResultList();
+            peopleList.sort(personComparator);
+            return peopleList;
+        } finally {
+            entityManager.close();
+        }
     }
 
     /**
@@ -195,14 +194,18 @@ public class PersonService implements PersistenceManagerFactoryContainer {
 
         Person person = entityManager.find(Person.class, entityIdentity);
 
-        Response.ResponseBuilder rBuild = Response.status(Response.Status.NOT_FOUND);
+        Response.ResponseBuilder rBuild;
 
         if (person != null && person.getAvatar() != null) {
-            rBuild = Response.ok(person.getAvatar(), APPLICATION_JSON);
+            Document image = person.getAvatar();
 
             if (width != 0 && height != 0) {
-                //TODO: person.avatar.scaledImageContent()
+                rBuild = Response.ok(person.getAvatar().scaledImageContent("jpg", image.getContent(), (int)width, (int)height));
+            } else {
+                rBuild = Response.status(Response.Status.BAD_REQUEST);
             }
+        } else {
+            rBuild = Response.status(Response.Status.BAD_REQUEST);
         }
 
         return rBuild.build();
@@ -238,9 +241,9 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         if (person == null) {
             throw new ClientErrorException(NOT_FOUND);
         } else if (personIdentity == requesterIdentity || requester.getGroup() == Group.ADMIN) {
-
-            // if a Document is found, the request body contains the exact picture which can be found in the database
-            List<Document> docs = entityManager.createQuery("SELECT doc from Document doc WHERE contentHash =" + HashTools.sha256HashCode(body)).getResultList();
+        	        	
+        	// if a Document is found, the request body contains the exact picture which can be found in the database
+        	List<Document> docs = entityManager.createQuery("SELECT doc from Document doc WHERE contentHash =" + HashTools.sha256HashCode(body), Document.class).getResultList();
             Document doc = docs.get(0);
 
             entityManager.getTransaction().begin();

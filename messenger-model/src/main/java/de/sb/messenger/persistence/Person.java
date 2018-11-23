@@ -54,7 +54,7 @@ public class Person extends BaseEntity{
 	
 	@NotNull
 	@ManyToMany(mappedBy = "peopleObserved", cascade = {CascadeType.REMOVE, CascadeType.REFRESH})
-	public Set<Person> peopleObserving;
+	private Set<Person> peopleObserving;
 	
 	@Nullable
 	@OneToMany(mappedBy = "author", cascade = {CascadeType.REMOVE, CascadeType.REFRESH})
@@ -63,7 +63,7 @@ public class Person extends BaseEntity{
 	@NotNull
 	@ManyToOne
 	@JoinColumn(name = "avatarReference", referencedColumnName = "documentIdentity")
-	public Document avatar;
+	private Document avatar;
 	
 	// constructors
 	
@@ -88,7 +88,7 @@ public class Person extends BaseEntity{
 		return this.email;
 	}
 	
-	protected void setEmail(String mail) {
+	public void setEmail(String mail) {
 		this.email = mail;
 	}
 	
@@ -96,7 +96,7 @@ public class Person extends BaseEntity{
 		return this.avatar;
 	}
 	
-	protected void setAvatar(Document doc) {
+	public void setAvatar(Document doc) {
 		this.avatar = doc;
 	}
 	
@@ -120,15 +120,15 @@ public class Person extends BaseEntity{
 		return passwordHash;
 	}
 	
-	protected void setPasswortHash(byte[] hash) {
+	public void setPasswordHash(byte[] hash) {
 		this.passwordHash = hash;
 	}
 	
-	public Set<Message> getAuthoredMessages(){
+	public Set<Message> getMessagesAuthored(){
 		return this.messagesAuthored;
 	}
 	
-	protected void setAuthoredMessages(Set<Message> messagesAuthored){
+	protected void setMessagesAuthored(Set<Message> messagesAuthored){
 		this.messagesAuthored = messagesAuthored;
 	}
 	
@@ -146,12 +146,5 @@ public class Person extends BaseEntity{
 	
 	public Address getAddress() {
 		return this.address;
-	}
-	
-	public static class NameComparator implements Comparator<Person> {
-	    @Override
-	    public int compare(Person a, Person b) {
-	        return a.name.compareTo(b.name);
-	    }
 	}
 }
