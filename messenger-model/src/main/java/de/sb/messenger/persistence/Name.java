@@ -1,56 +1,53 @@
 package de.sb.messenger.persistence;
 
+import de.sb.toolbox.bind.JsonProtectedPropertyStrategy;
+
+import javax.json.bind.annotation.JsonbProperty;
+import javax.json.bind.annotation.JsonbVisibility;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import javax.xml.bind.annotation.XmlAttribute;
+import java.util.Comparator;
 
 @Embeddable
-public class Name implements Comparable<Name>{
-	@Size(min = 1, max = 31)
-	@NotNull
-	@Column(name = "surname", nullable=false, updatable=true)
-	private String family;
-	
-	@Size(min = 1, max = 31)
-	@NotNull
-	@Column(name = "forename", nullable=false, updatable=true)
-	private String given;
+@JsonbVisibility(JsonProtectedPropertyStrategy.class)
+public class Name implements Comparable<Name> {
+    private static final Comparator<Name> NAME_COMPARATOR = Comparator.comparing(Name::getFamily).thenComparing(Name::getGiven);
 
-	public String getFamily() {
-		return family;
-	}
+    @Size(min = 1, max = 31)
+    @NotNull
+    @Column(name = "surname", nullable = false, updatable = true)
+    private String family;
 
-	public void setFamily(String family) {
-		this.family = family;
-	}
+    @Size(min = 1, max = 31)
+    @NotNull
+    @Column(name = "forename", nullable = false, updatable = true)
+    private String given;
 
-	public String getGiven() {
-		return given;
-	}
+    @JsonbProperty
+    @XmlAttribute
+    public String getFamily() {
+        return family;
+    }
 
-	public void setGiven(String given) {
-		this.given = given;
-	}
+    public void setFamily(String family) {
+        this.family = family;
+    }
 
-	@Override
-	public int compareTo(Name arg0) {
-		String name = family + given;
-		String nameComp = arg0.family + arg0.given;
-		for (int i = 0; i < name.length(); i++) {
-			if(name.charAt(i) < nameComp.charAt(i))
-				return -1;
-			if(name.charAt(i) > nameComp.charAt(i))
-				return 1;
-		}
+    @JsonbProperty
+    @XmlAttribute
+    public String getGiven() {
+        return given;
+    }
 
-		if (name.length()< nameComp.length())
-			return -1;
-		if (name.length()> nameComp.length())
-			return 1;
-		return 0;
-		
-		// TODO possible with String.compareToString
-		
-	} 
+    public void setGiven(String given) {
+        this.given = given;
+    }
+
+    @Override
+    public int compareTo(Name other) {
+        return NAME_COMPARATOR.compare(this, other);
+    }
 }

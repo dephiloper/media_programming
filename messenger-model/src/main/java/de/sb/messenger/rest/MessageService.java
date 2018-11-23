@@ -31,14 +31,13 @@ public class MessageService implements PersistenceManagerFactoryContainer {
      * timestamp, plus resultOffset and resultLimit which define a result range.
      */
     @GET
-    @Produces({ APPLICATION_JSON, APPLICATION_XML })
+    @Produces({APPLICATION_JSON, APPLICATION_XML})
     public Collection<Message> queryMessages(
-        @QueryParam("fragment") String fragment,
-        @QueryParam("lowerCreationTimestamp") Long lowerCreationTimestamp,
-        @QueryParam("upperCreationTimestamp") Long upperCreationTimestamp,
-        @QueryParam("resultOffset") Integer resultOffset,
-        @QueryParam("resultLimit") Integer resultLimit)
-    {
+            @QueryParam("fragment") String fragment,
+            @QueryParam("lowerCreationTimestamp") Long lowerCreationTimestamp,
+            @QueryParam("upperCreationTimestamp") Long upperCreationTimestamp,
+            @QueryParam("resultOffset") Integer resultOffset,
+            @QueryParam("resultLimit") Integer resultLimit) {
         final EntityManager entityManager = entityManagerFactory.createEntityManager();
 
         StringBuilder queryStrings = new StringBuilder();
@@ -95,8 +94,8 @@ public class MessageService implements PersistenceManagerFactoryContainer {
      */
     @GET
     @Path("{id}")
-    @Produces({ APPLICATION_JSON, APPLICATION_XML })
-    public Message queryPerson (@PathParam("id") @Positive final long messageIdentity) {
+    @Produces({APPLICATION_JSON, APPLICATION_XML})
+    public Message queryPerson(@PathParam("id") @Positive final long messageIdentity) {
         final EntityManager entityManager = entityManagerFactory.createEntityManager();
         Message message = entityManager.find(Message.class, messageIdentity);
 
@@ -119,8 +118,7 @@ public class MessageService implements PersistenceManagerFactoryContainer {
     @Consumes({"application/x-www-form-urlencoded"})
     public String createMessage(@NotNull @FormParam("body") String body,
                                 @NotNull @FormParam("subjectReference") String subjectReference,
-                                @NotNull @HeaderParam("Requester-Identity") Long requesterIdentity)
-    {
+                                @NotNull @HeaderParam("Requester-Identity") Long requesterIdentity) {
 
         final EntityManager entityManager = entityManagerFactory.createEntityManager();
         Person author = entityManager

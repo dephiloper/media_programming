@@ -40,87 +40,90 @@ import de.sb.toolbox.net.RestJpaLifecycleProvider;
 @Path("entities")
 @Copyright(year = 2013, holders = "Sascha Baumeister")
 public class EntityService {
-	
-	/**
-	 * Returns the entity with the given identity.
-	 * @param entityIdentity the entity identity
-	 * @return the matching entity (HTTP 200)
-	 * @throws ClientErrorException (HTTP 404) if the given entity cannot be found
-	 * @throws PersistenceException (HTTP 500) if there is a problem with the persistence layer
-	 * @throws IllegalStateException (HTTP 500) if the entity manager associated with the current thread is not open
-	 */
-	@GET
-	@Path("{id}")
-	@Produces({ APPLICATION_JSON, APPLICATION_XML })
-	public BaseEntity queryEntity (
-		@PathParam("id") @Positive final long entityIdentity
-	) {
-		final EntityManager messengerManager = RestJpaLifecycleProvider.entityManager("messenger");
-		final BaseEntity entity = messengerManager.find(BaseEntity.class, entityIdentity);
-		if (entity == null) throw new ClientErrorException(NOT_FOUND);
 
-		return entity;
-	}
+    /**
+     * Returns the entity with the given identity.
+     *
+     * @param entityIdentity the entity identity
+     * @return the matching entity (HTTP 200)
+     * @throws ClientErrorException  (HTTP 404) if the given entity cannot be found
+     * @throws PersistenceException  (HTTP 500) if there is a problem with the persistence layer
+     * @throws IllegalStateException (HTTP 500) if the entity manager associated with the current thread is not open
+     */
+    @GET
+    @Path("{id}")
+    @Produces({APPLICATION_JSON, APPLICATION_XML})
+    public BaseEntity queryEntity(
+            @PathParam("id") @Positive final long entityIdentity
+    ) {
+        final EntityManager messengerManager = RestJpaLifecycleProvider.entityManager("messenger");
+        final BaseEntity entity = messengerManager.find(BaseEntity.class, entityIdentity);
+        if (entity == null) throw new ClientErrorException(NOT_FOUND);
 
-
-	/**
-	 * Deletes the entity matching the given identity, or does nothing if no such entity exists.
-	 * @param requesterIdentity the authenticated requester identity
-	 * @param entityIdentity the entity identity
-	 * @return void (HTTP 204)
-	 * @throws ClientErrorException (HTTP 403) if the given requester is not an administrator
-	 * @throws ClientErrorException (HTTP 404) if the given entity cannot be found
-	 * @throws ClientErrorException (HTTP 409) if there is a database constraint violation (like conflicting locks)
-	 * @throws PersistenceException (HTTP 500) if there is a problem with the persistence layer
-	 * @throws IllegalStateException (HTTP 500) if the entity manager associated with the current thread is not open
-	 */
-	@DELETE
-	@Path("{id}")
-	public void deleteEntity (
-		@HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
-		@PathParam("id") @Positive final long entityIdentity
-	) {
-		final EntityManager messengerManager = RestJpaLifecycleProvider.entityManager("messenger");
-		final Person requester = messengerManager.find(Person.class, requesterIdentity);
-		if (requester == null || requester.getGroup() != Group.ADMIN) throw new ClientErrorException(FORBIDDEN);
-
-		// TODO: check if getReference() works once https://bugs.eclipse.org/bugs/show_bug.cgi?id=460063 is fixed.
-		final BaseEntity entity = messengerManager.find(BaseEntity.class, entityIdentity);
-		if (entity == null) throw new ClientErrorException(NOT_FOUND);
-		messengerManager.remove(entity);
-
-		try {
-			messengerManager.getTransaction().commit();
-		} catch (final RollbackException exception) {
-			throw new ClientErrorException(CONFLICT);
-		} finally {
-			messengerManager.getTransaction().begin();
-		}
-
-		messengerManager.getEntityManagerFactory().getCache().evict(BaseEntity.class, entityIdentity);
-	}
+        return entity;
+    }
 
 
-	/**
-	 * Returns the messages caused by the entity matching the given identity, in natural order.
-	 * @param entityIdentity the entity identity
-	 * @return the messages caused by the matching entity (HTTP 200)
-	 * @throws ClientErrorException (HTTP 404) if the given message cannot be found
-	 * @throws PersistenceException (HTTP 500) if there is a problem with the persistence layer
-	 * @throws IllegalStateException (HTTP 500) if the entity manager associated with the current thread is not open
-	 */
-	@GET
-	@Path("{id}/messagesCaused")
-	@Produces({ APPLICATION_JSON, APPLICATION_XML })
-	public Message[] queryMessagesCaused (
-		@PathParam("id") @Positive final long entityIdentity
-	) {
-		final EntityManager messengerManager = RestJpaLifecycleProvider.entityManager("messenger");
-		final BaseEntity entity = messengerManager.find(BaseEntity.class, entityIdentity);
-		if (entity == null) throw new ClientErrorException(NOT_FOUND);
+    /**
+     * Deletes the entity matching the given identity, or does nothing if no such entity exists.
+     *
+     * @param requesterIdentity the authenticated requester identity
+     * @param entityIdentity    the entity identity
+     * @return void (HTTP 204)
+     * @throws ClientErrorException  (HTTP 403) if the given requester is not an administrator
+     * @throws ClientErrorException  (HTTP 404) if the given entity cannot be found
+     * @throws ClientErrorException  (HTTP 409) if there is a database constraint violation (like conflicting locks)
+     * @throws PersistenceException  (HTTP 500) if there is a problem with the persistence layer
+     * @throws IllegalStateException (HTTP 500) if the entity manager associated with the current thread is not open
+     */
+    @DELETE
+    @Path("{id}")
+    public void deleteEntity(
+            @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
+            @PathParam("id") @Positive final long entityIdentity
+    ) {
+        final EntityManager messengerManager = RestJpaLifecycleProvider.entityManager("messenger");
+        final Person requester = messengerManager.find(Person.class, requesterIdentity);
+        if (requester == null || requester.getGroup() != Group.ADMIN) throw new ClientErrorException(FORBIDDEN);
 
-		final Message[] messages = entity.getMessagesCaused().toArray(new Message[0]);
-		Arrays.sort(messages);
-		return messages;
-	}
+        // TODO: check if getReference() works once https://bugs.eclipse.org/bugs/show_bug.cgi?id=460063 is fixed.
+        final BaseEntity entity = messengerManager.find(BaseEntity.class, entityIdentity);
+        if (entity == null) throw new ClientErrorException(NOT_FOUND);
+        messengerManager.remove(entity);
+
+        try {
+            messengerManager.getTransaction().commit();
+        } catch (final RollbackException exception) {
+            throw new ClientErrorException(CONFLICT);
+        } finally {
+            messengerManager.getTransaction().begin();
+        }
+
+        messengerManager.getEntityManagerFactory().getCache().evict(BaseEntity.class, entityIdentity);
+    }
+
+
+    /**
+     * Returns the messages caused by the entity matching the given identity, in natural order.
+     *
+     * @param entityIdentity the entity identity
+     * @return the messages caused by the matching entity (HTTP 200)
+     * @throws ClientErrorException  (HTTP 404) if the given message cannot be found
+     * @throws PersistenceException  (HTTP 500) if there is a problem with the persistence layer
+     * @throws IllegalStateException (HTTP 500) if the entity manager associated with the current thread is not open
+     */
+    @GET
+    @Path("{id}/messagesCaused")
+    @Produces({APPLICATION_JSON, APPLICATION_XML})
+    public Message[] queryMessagesCaused(
+            @PathParam("id") @Positive final long entityIdentity
+    ) {
+        final EntityManager messengerManager = RestJpaLifecycleProvider.entityManager("messenger");
+        final BaseEntity entity = messengerManager.find(BaseEntity.class, entityIdentity);
+        if (entity == null) throw new ClientErrorException(NOT_FOUND);
+
+        final Message[] messages = entity.getMessagesCaused().toArray(new Message[0]);
+        Arrays.sort(messages);
+        return messages;
+    }
 }

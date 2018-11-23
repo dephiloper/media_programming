@@ -200,7 +200,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             Document image = person.getAvatar();
 
             if (width != 0 && height != 0) {
-                rBuild = Response.ok(person.getAvatar().scaledImageContent("jpg", image.getContent(), (int)width, (int)height));
+                rBuild = Response.ok(person.getAvatar().scaledImageContent("jpg", image.getContent(), (int) width, (int) height));
             } else {
                 rBuild = Response.status(Response.Status.BAD_REQUEST);
             }
@@ -241,9 +241,9 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         if (person == null) {
             throw new ClientErrorException(NOT_FOUND);
         } else if (personIdentity == requesterIdentity || requester.getGroup() == Group.ADMIN) {
-        	        	
-        	// if a Document is found, the request body contains the exact picture which can be found in the database
-        	List<Document> docs = entityManager.createQuery("SELECT doc from Document doc WHERE contentHash =" + HashTools.sha256HashCode(body), Document.class).getResultList();
+
+            // if a Document is found, the request body contains the exact picture which can be found in the database
+            List<Document> docs = entityManager.createQuery("SELECT doc from Document doc WHERE contentHash =" + HashTools.sha256HashCode(body), Document.class).getResultList();
             Document doc = docs.get(0);
 
             entityManager.getTransaction().begin();
