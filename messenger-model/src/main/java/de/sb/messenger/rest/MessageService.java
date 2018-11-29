@@ -4,6 +4,7 @@ import de.sb.messenger.persistence.BaseEntity;
 import de.sb.messenger.persistence.Message;
 import de.sb.messenger.persistence.Person;
 import de.sb.toolbox.Copyright;
+import de.sb.toolbox.net.RestJpaLifecycleProvider;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -16,13 +17,12 @@ import java.util.List;
 
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 @Path("messages")
 @Copyright(year = 2018, holders = "Gruppe Drei (Gruppe 5)")
 public class MessageService implements PersistenceManagerFactoryContainer {
-    private static final EntityManagerFactory entityManagerFactory =
-            Persistence.createEntityManagerFactory("messenger");
 
     /**
      * Returns the messages matching the given criteria, with missing
@@ -30,6 +30,7 @@ public class MessageService implements PersistenceManagerFactoryContainer {
      * message body fragment (compare using the like operator), an upper/lower creation
      * timestamp, plus resultOffset and resultLimit which define a result range.
      */
+    
     @GET
     @Produces({APPLICATION_JSON, APPLICATION_XML})
     public Collection<Message> queryMessages(
@@ -38,7 +39,8 @@ public class MessageService implements PersistenceManagerFactoryContainer {
             @QueryParam("upperCreationTimestamp") Long upperCreationTimestamp,
             @QueryParam("resultOffset") Integer resultOffset,
             @QueryParam("resultLimit") Integer resultLimit) {
-        final EntityManager entityManager = entityManagerFactory.createEntityManager();
+    	
+    	final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
 
         StringBuilder queryStrings = new StringBuilder();
         queryStrings.append("select message from Message as message");
@@ -80,9 +82,7 @@ public class MessageService implements PersistenceManagerFactoryContainer {
             query.setParameter("lowerCreationTimestamp", lowerCreationTimestamp);
         if (upperCreationTimestamp != null)
             query.setParameter("upperCreationTimestamp", upperCreationTimestamp);
-
-        entityManager.close();
-
+        
         List<Message> messageList = query.getResultList();
         messageList.sort(Comparator.comparing(Message::getIdentity));
 
@@ -102,17 +102,17 @@ public class MessageService implements PersistenceManagerFactoryContainer {
         if (message == null)
             throw new ClientErrorException(NOT_FOUND);
 
-        entityManager.close();
         return message;
     }
 
     /**
      * Creates a new message, using an HTTP form as a body
-     * parameter (content type "application/x-www-form-urlencoded") with the fields “body”
-     * (message body) and “subjectReference” (message subject), and Header field
-     * “Requester-Identity” (message author) – this header field will later be supplied during
+     * parameter (content type "application/x-www-form-urlencoded") with the fields body
+     * (message body) and subjectReference (message subject), and Header field
+     * Requester-Identity (message author) this header field will later be supplied during
      * authentication. Return the affected message's identity as text/plain.
      */
+    
     @POST
     @Produces({TEXT_PLAIN})
     @Consumes({"application/x-www-form-urlencoded"})
@@ -135,10 +135,16 @@ public class MessageService implements PersistenceManagerFactoryContainer {
 
         Message message = new Message(author, subject);
         entityManager.getTransaction().begin();
-        entityManager.persist(message);
-        entityManager.flush();
-        entityManager.getTransaction().commit();
-        entityManager.close();
+        try { 
+        	entityManager.persist(message);
+        	entityManager.flush();
+        	entityManager.getTransaction().commit();
+        } catch (final RollbackException exception) {
+        	entityManager.getTransaction().rollback();
+        	throw new ClientErrorException(CONFLICT);
+        } finally {
+        	entityManager.getTransaction().begin();
+        }
 
         return Long.toString(message.getIdentity());
     }
@@ -146,8 +152,8 @@ public class MessageService implements PersistenceManagerFactoryContainer {
     /*
      * Sind dabei Filter-Queries gefordert, so definiert als Query-Parameter ein Suchkriterium
      * pro textuellem Entity-Feld, und zwei für numerische Felder (für >= und <= Vergleich).
-     * Definiert zudem einen JP-QL Query nach folgendem Muster (statt „=“ kann für mehr
-     * Flexibilität auch „like“ verwendet werden, ist aber deutlich teurer in der Ausführung):
+     * Definiert zudem einen JP-QL Query nach folgendem Muster (statt = kann für mehr
+     * Flexibilität auch like verwendet werden, ist aber deutlich teurer in der Ausführung):
      *
      * select x from X as x where
      * (:lowerNumber is null or x.number >= :lowerNumber) and
@@ -156,7 +162,7 @@ public class MessageService implements PersistenceManagerFactoryContainer {
      *
      * Wird durch einen Service eine Relation modifiziert, dann sind nach Speicherung der
      * Änderungen (i.e. commit) zudem alle Entitäten aus dem 2nd-Level Cache zu entfernen
-     * deren „mappedBy“-Relationsmengen sich dadurch ändern; diese Spiegel-Mengen werden
+     * deren mappedBy-Relationsmengen sich dadurch ändern; diese Spiegel-Mengen werden
      * weder im 1st-Level Cache noch im 2nd-Level Cache automatisch verwaltet:
      *
      * cache = entityManager.getEntityManagerFactory().getCache();

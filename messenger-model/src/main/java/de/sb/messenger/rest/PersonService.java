@@ -2,6 +2,7 @@ package de.sb.messenger.rest;
 
 import de.sb.messenger.persistence.*;
 import de.sb.toolbox.Copyright;
+import de.sb.toolbox.net.RestJpaLifecycleProvider;
 
 import javax.persistence.EntityManager;
 import javax.persistence.RollbackException;
@@ -35,7 +36,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
     /**
      * Returns the people matching the given filter criteria, with missing
      * parameters identifying omitted (ausgelassenen) criteria, sorted by family name, given name, email.
-     * Search criteria should be any â€œnormalâ€� property of person and itâ€™s composites, except
+     * Search criteria should be any normal property of person and it composites, except
      * identity and password, plus resultOffset and resultLimit which define a result range.
      */
     @GET
@@ -52,7 +53,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             @QueryParam("city") String city,
             @QueryParam("group") String group) {
 
-        final EntityManager entityManager = entityManagerFactory.createEntityManager();
+        final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
 
         TypedQuery<Person> query = entityManager.createQuery(QUERY_STRING, Person.class);
 
@@ -66,13 +67,9 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         if (city != null) query.setParameter("city", city);
         if (group != null) query.setParameter("group", group);
 
-        try {
-            List<Person> peopleList = query.getResultList();
-            peopleList.sort(personComparator);
-            return peopleList;
-        } finally {
-            entityManager.close();
-        }
+        List<Person> peopleList = query.getResultList();
+        peopleList.sort(personComparator);
+        return peopleList;       
     }
 
     /**
@@ -82,7 +79,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
      * person with the given data. Use the Header field Requester-Identity to make sure the requester is either
      * the person to be modified, or an administrator this header field will later be supplied during
      * authentication. Also, make sure non-administrators don't set their Group to ADMIN.
-     * Optionally, a new password may be set using the header field â€œSet-Password. Returns
+     * Optionally, a new password may be set using the header field Set-Password. Returns
      * the affected person's identity as text/plain
      * ADMIN, USER
      */
@@ -95,7 +92,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             Person personTemplate) {
 
         long affectedPersonId = -1;
-        final EntityManager entityManager = entityManagerFactory.createEntityManager();
+        final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
         Person requester = entityManager.find(Person.class, requesterIdentity);
 
         // check if requester is null
@@ -119,9 +116,10 @@ public class PersonService implements PersistenceManagerFactoryContainer {
                     entityManager.getTransaction().commit();
                     affectedPersonId = personTemplate.getIdentity();
                 } catch (final RollbackException exception) {
+                	entityManager.getTransaction().rollback();
                     throw new ClientErrorException(CONFLICT);
-                } finally {
-                    entityManager.getTransaction().rollback();
+                } finally {                    
+                    entityManager.getTransaction().begin();
                 }
                 break;
             // you are a user
@@ -138,9 +136,10 @@ public class PersonService implements PersistenceManagerFactoryContainer {
                     entityManager.getTransaction().commit();
                     affectedPersonId = personTemplate.getIdentity();
                 } catch (final RollbackException exception) {
+                	entityManager.getTransaction().rollback();
                     throw new ClientErrorException(CONFLICT);
                 } finally {
-                    entityManager.getTransaction().rollback();
+                	entityManager.getTransaction().begin();
                 }
 
                 break;
@@ -153,7 +152,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
     /**
      * GET /people/{id}
      * Returns the person matching the given identity, or the person
-     * matching the given header field â€œRequester-Identityâ€� if the former is zero. The header
+     * matching the given header field Requester-Identity if the former is zero. The header
      * field will later be injected during successful authentication.
      */
     @GET
@@ -162,13 +161,11 @@ public class PersonService implements PersistenceManagerFactoryContainer {
     public Person queryPerson(
             @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
             @PathParam("id") @Positive final long entityIdentity) {
-        final EntityManager entityManager = entityManagerFactory.createEntityManager();
+    	final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
         Person person = entityManager.find(Person.class, entityIdentity);
 
         if (person == null)
             throw new ClientErrorException(NOT_FOUND);
-
-        entityManager.close();
         return person;
     }
 
@@ -190,7 +187,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             @PathParam("id") @Positive final long entityIdentity,
             @QueryParam("width") final long width,
             @QueryParam("height") final long height) {
-        final EntityManager entityManager = entityManagerFactory.createEntityManager();
+    	final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
 
         Person person = entityManager.find(Person.class, entityIdentity);
 
@@ -215,13 +212,13 @@ public class PersonService implements PersistenceManagerFactoryContainer {
      * PUT /people/{id}/avatar
      * Updates the given person's avatar using the document
      * content passed within the HTTP request body, and the media type passed as HeaderField
-     * â€œContent-Typeâ€�. Use MediaType.WILDCARD to declare consumption of an a priori
+     * Content-Type. Use MediaType.WILDCARD to declare consumption of an a priori
      * unknown media type. If the given content is empty, the person's avatar shall be set to
      * the default document (identity=1). Otherwise, if a document matching the hash or the
      * given content already exists, then this document shall become the person's avatar.
      * Otherwise, the given content and content-type is used to create a new document which
-     * becomes the person's avatar. Make sure the Header field â€œRequester-Identityâ€� matches
-     * the given person identity â€“ this header field will later be supplied during authentication.
+     * becomes the person's avatar. Make sure the Header field Requester-Identity matches
+     * the given person identity this header field will later be supplied during authentication.
      */
     @PUT
     @Path("{id}/avatar")
@@ -231,7 +228,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             @HeaderParam(REQUESTER_IDENTITY) final long requesterIdentity,
             @HeaderParam("Content-Type") String type, byte[] body) {
 
-        final EntityManager entityManager = entityManagerFactory.createEntityManager();
+    	final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
         Person requester = entityManager.find(Person.class, requesterIdentity);
         Person person = entityManager.find(Person.class, personIdentity);
 
@@ -263,13 +260,12 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             try {
                 entityManager.getTransaction().commit();
             } catch (final RollbackException exception) {
-                throw new ClientErrorException(CONFLICT);
+            	entityManager.getTransaction().rollback();
+            	throw new ClientErrorException(CONFLICT);
             } finally {
-                entityManager.getTransaction().rollback();
+            	entityManager.getTransaction().begin();
             }
         }
-
-        entityManager.close();
         return person.getIdentity();
     }
 
@@ -284,7 +280,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
     public Collection<Message> queryPersonMessages(
             @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
             @PathParam("id") @Positive final long entityIdentity) {
-        final EntityManager entityManager = entityManagerFactory.createEntityManager();
+    	final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
         Person person = entityManager.find(Person.class, entityIdentity);
         Person requester = entityManager.find(Person.class, requesterIdentity);
 
@@ -294,8 +290,6 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         if (person == null)
             throw new ClientErrorException(NOT_FOUND);
 
-        entityManager.close();
-
         return person.getMessagesAuthored();
     }
 
@@ -304,7 +298,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
      * Updates the given person to monitor the
      * people matching the form-supplied collection of person identities in application/x-wwwform-urlencoded
      * format, meaning as multiple form-entries sharing the same name.
-     * Make sure the Header field â€œRequester-Identityâ€� matches the given person identity â€“
+     * Make sure the Header field Requester-Identity matches the given person identity
      * this header field will later be supplied during authentication.
      */
     @PUT
@@ -314,7 +308,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
             @PathParam("id") @Positive final long entityIdentity) {
 
-        final EntityManager entityManager = entityManagerFactory.createEntityManager();
+    	final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
         Person requester = entityManager.find(Person.class, requesterIdentity);
         Person person = new Person(new Document() {
         });
@@ -325,7 +319,6 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         if (person == null)
             throw new ClientErrorException(NOT_FOUND);
 
-        entityManager.close();
         return person.getPeopleObserved();
     }
 }
