@@ -16,9 +16,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static javax.ws.rs.core.MediaType.*;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.*;
 
 @Path("messages")
 @Copyright(year = 2018, holders = "Gruppe Drei (Gruppe 5)")
@@ -114,39 +112,31 @@ public class MessageService implements PersistenceManagerFactoryContainer {
      */
     
     @POST
-    @Produces({TEXT_PLAIN})
-    @Consumes({"application/x-www-form-urlencoded"})
-    public String createMessage(@NotNull @FormParam("body") String body,
-                                @NotNull @FormParam("subjectReference") String subjectReference,
-                                @NotNull @HeaderParam("Requester-Identity") Long requesterIdentity) {
+    @Produces(TEXT_PLAIN)
+    @Consumes(TEXT_PLAIN)
+    public long createMessage(@NotNull String body,
+                                @Positive @QueryParam("subjectReference") long subjectReference,
+                                @Positive @HeaderParam("Requester-Identity") long requesterIdentity) {
 
-        final EntityManager entityManager = entityManagerFactory.createEntityManager();
-        Person author = entityManager
-                .createQuery("select person from Person as person where (person.identity = :personIdentity", Person.class)
-                .setParameter("personIdentity", requesterIdentity)
-                .getSingleResult();
-        if (author == null) {
-            throw new ClientErrorException(BAD_REQUEST);
-        }
-        BaseEntity subject = entityManager.createQuery("TODO", BaseEntity.class).getSingleResult();
-        if (subject == null) {
-            throw new ClientErrorException(BAD_REQUEST);
-        }
+        final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
 
-        Message message = new Message(author, subject);
-        entityManager.getTransaction().begin();
-        try { 
-        	entityManager.persist(message);
-        	entityManager.flush();
+        Person requester = entityManager.find(Person.class, requesterIdentity);
+        if (requester == null) throw new ClientErrorException(FORBIDDEN);
+
+        BaseEntity subject = entityManager.find(BaseEntity.class, subjectReference);
+        if (subject == null) throw new ClientErrorException(NOT_FOUND);
+
+        Message message = new Message(requester, subject);
+        entityManager.persist(message);
+        try {
         	entityManager.getTransaction().commit();
         } catch (final RollbackException exception) {
-        	entityManager.getTransaction().rollback();
         	throw new ClientErrorException(CONFLICT);
         } finally {
         	entityManager.getTransaction().begin();
         }
 
-        return Long.toString(message.getIdentity());
+        return message.getIdentity();
     }
 
     /*
