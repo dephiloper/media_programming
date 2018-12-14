@@ -12,3 +12,5 @@ gradlew.bat
 
 /TheMaze/Assets
 /TheMaze/Library
+/.metadata/
+/messenger-test/bin
