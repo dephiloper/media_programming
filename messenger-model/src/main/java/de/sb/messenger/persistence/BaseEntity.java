@@ -40,7 +40,7 @@ public class BaseEntity implements Comparable<BaseEntity> {
     @Column(nullable = false, updatable = false, insertable = false)
     private long creationTimestamp;
 
-    @OneToMany(mappedBy = "subject", cascade = {CascadeType.REMOVE, CascadeType.REFRESH})
+    @OneToMany(mappedBy = "subject", cascade = {CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REMOVE})
     private Set<Message> messagesCaused;
 
     protected BaseEntity() {

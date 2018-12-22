@@ -6,6 +6,7 @@ import javax.json.bind.annotation.JsonbProperty;
 import javax.json.bind.annotation.JsonbVisibility;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -18,11 +19,13 @@ public class Name implements Comparable<Name> {
 
     @Size(min = 1, max = 31)
     @NotNull
+    @NotEmpty
     @Column(name = "surname", nullable = false, updatable = true)
     private String family;
 
     @Size(min = 1, max = 31)
     @NotNull
+    @NotEmpty
     @Column(name = "forename", nullable = false, updatable = true)
     private String given;
 

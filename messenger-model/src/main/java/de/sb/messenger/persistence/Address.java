@@ -4,6 +4,7 @@ import javax.json.bind.annotation.JsonbProperty;
 import javax.json.bind.annotation.JsonbVisibility;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -19,16 +20,17 @@ class Address implements Comparable<Address> {
             .thenComparing(Address::getCity)
             .thenComparing(Address::getStreet);
 
-    @Size(min = 1, max = 63)
+    @Size(min = 0, max = 63)
     @Column(nullable = false, updatable = true)
     private String street;
 
-    @Size(min = 1, max = 15)
+    @Size(min = 0, max = 15)
     @Column(nullable = false, updatable = true)
     private String postcode;
 
     @Size(min = 1, max = 63)
     @NotNull
+    @NotEmpty
     @Column(nullable = false, updatable = true)
     private String city;
 

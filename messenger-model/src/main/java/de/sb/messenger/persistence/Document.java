@@ -22,15 +22,19 @@ public class Document extends BaseEntity {
 
     @Size(min = 32, max = 32)
     @NotNull
+    @NotEmpty
     @Column(nullable = false, updatable = true)
     private byte[] contentHash;
 
+    @Size(min = 1, max = 2^24-1)
     @NotNull
+    @NotEmpty
     @Column(nullable = false, updatable = true)
     private byte[] content;
 
     @Size(min = 1, max = 63)
     @NotNull
+    @NotEmpty
     @Column(nullable = false, updatable = true)
     private String contentType;
 

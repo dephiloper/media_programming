@@ -51,11 +51,14 @@ public class Person extends BaseEntity {
 
     @Size(min = 1, max = 128)
     @NotNull
+    @NotEmpty
     @Column(nullable = true, updatable = true)
+    @Email
     private String email;
 
     @Size(min = 32, max = 32)
     @NotNull
+    @NotEmpty
     @Column(nullable = false, updatable = true)
     private byte[] passwordHash;
 
@@ -83,12 +86,14 @@ public class Person extends BaseEntity {
     private Group group;
 
     @NotNull
-    @ManyToMany(mappedBy = "peopleObserved", cascade = {CascadeType.REMOVE, CascadeType.REFRESH})
+    @ManyToMany(mappedBy = "peopleObserved", cascade = {CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REMOVE})
     private Set<Person> peopleObserving;
 
-    @OneToMany(mappedBy = "author", cascade = {CascadeType.REMOVE, CascadeType.REFRESH})
+    @OneToMany(mappedBy = "author", cascade = {CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REMOVE})
     private Set<Message> messagesAuthored;
 
+
+    // TODO auf jeden Fall REFRESH, MERGE, und DETACH, falls in der Datenbank so definiert auch REMOVE: die DB definiert hier restricted remove aber es gibt keine OneToMany gegenseite.. wo definiert man es dann?
     @NotNull
     @ManyToOne
     @JoinColumn(name = "avatarReference", referencedColumnName = "documentIdentity")

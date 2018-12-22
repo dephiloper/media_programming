@@ -6,6 +6,8 @@ import javax.json.bind.annotation.JsonbProperty;
 import javax.json.bind.annotation.JsonbTransient;
 import javax.json.bind.annotation.JsonbVisibility;
 import javax.persistence.*;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlTransient;
 
@@ -16,6 +18,8 @@ import javax.xml.bind.annotation.XmlTransient;
 public class Message extends BaseEntity {
 
 	@Column(nullable = true, updatable = true)
+	@Size(min = 1, max = 2^13-3)
+	@NotEmpty
 	private String body;
 	
 	@ManyToOne
