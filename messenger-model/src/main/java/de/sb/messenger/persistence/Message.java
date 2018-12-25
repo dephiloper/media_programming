@@ -62,6 +62,7 @@ public class Message extends BaseEntity {
 		return subject;
 	}
 
+	// TODO S.14-29: Definiert dazu folgende zusätzliche Methoden, mit ?aufsteigender Reihenfolge bei Mengenergebnissen?
 	@JsonbProperty @XmlAttribute
 	public long getAuthorReference() {
 		if (author == null) return 0;

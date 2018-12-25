@@ -3,6 +3,7 @@ package de.sb.messenger.persistence;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.json.bind.annotation.JsonbProperty;
 import javax.json.bind.annotation.JsonbTransient;
 import javax.json.bind.annotation.JsonbVisibility;
@@ -142,7 +143,7 @@ public class Person extends BaseEntity {
     @XmlAttribute
     public long getAvatarReference() {
         if (avatar == null) return 0;
-        return this.avatar.getIdentity();
+        return avatar.getIdentity();
     }
 
     @JsonbTransient
@@ -157,11 +158,15 @@ public class Person extends BaseEntity {
 
     @JsonbProperty
     @XmlElement
-    public HashSet<Long> getPeopleOvservingReference() {
-        HashSet<Long> references = new HashSet<>();
-        for (Person p : peopleObserved)
-            references.add(p.getIdentity());
-        return references;
+    public HashSet<Long> getPeopleObservingReferences() {
+        // magic lambda magic is magic
+        // map returns a stream which contains the results of the function Person.getIdentity() of all the set elements
+        // collect allows repacking elements into a specified data structure
+        // Collectors.toList or Collectors.toSet does not specify a particular implementation therefore toCollection
+        // is used w/ the command to use the HashSet implementation pretty neat!
+        // https://stackoverflow.com/a/30082600/10547035 <3
+        return peopleObserving.stream().map(Person::getIdentity).collect(Collectors.toCollection(HashSet::new));
+
     }
 
     @JsonbTransient
@@ -172,6 +177,12 @@ public class Person extends BaseEntity {
 
     protected void setPeopleObserved(Set<Person> peopleObserved) {
         this.peopleObserved = peopleObserved;
+    }
+
+    @JsonbProperty
+    @XmlElement
+    public HashSet<Long> getPeopleObservedReferences() {
+        return peopleObserved.stream().map(Person::getIdentity).collect(Collectors.toCollection(HashSet::new));
     }
 
     @JsonbTransient
@@ -194,13 +205,12 @@ public class Person extends BaseEntity {
         this.messagesAuthored = messagesAuthored;
     }
 
+
+    // TODO in der Beschreibung taucht diese Methode nicht auf
     @JsonbProperty
     @XmlElement
     public HashSet<Long> getMessagesAuthoredReferences() {
-        HashSet<Long> references = new HashSet<>();
-        for (Message m : messagesAuthored)
-            references.add(m.getIdentity());
-        return references;
+        return messagesAuthored.stream().map(Message::getIdentity).collect(Collectors.toCollection(HashSet::new));
     }
 
     @JsonbProperty
