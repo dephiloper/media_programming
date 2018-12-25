@@ -1,6 +1,7 @@
 package de.sb.messenger.persistence;
 
 import de.sb.toolbox.bind.JsonProtectedPropertyStrategy;
+import de.sb.toolbox.bind.XmlLongToStringAdapter;
 
 import javax.json.bind.annotation.JsonbProperty;
 import javax.json.bind.annotation.JsonbTransient;
@@ -9,10 +10,8 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.*;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -21,6 +20,7 @@ import java.util.Set;
 @Inheritance(strategy = InheritanceType.JOINED)
 @DiscriminatorColumn(name = "discriminator")
 @XmlAccessorType(XmlAccessType.NONE)
+@XmlSeeAlso(value = {Person.class, Document.class, Message.class})
 @JsonbVisibility(JsonProtectedPropertyStrategy.class)
 public class BaseEntity implements Comparable<BaseEntity> {
 
@@ -56,6 +56,8 @@ public class BaseEntity implements Comparable<BaseEntity> {
 
     @JsonbProperty
     @XmlAttribute
+    @XmlID
+    @XmlJavaTypeAdapter(type = long.class, value = XmlLongToStringAdapter.class)
     public long getIdentity() {
         return this.identity;
     }

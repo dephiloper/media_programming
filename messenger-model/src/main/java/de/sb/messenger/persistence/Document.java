@@ -7,14 +7,14 @@ import javax.json.bind.annotation.JsonbTransient;
 import javax.json.bind.annotation.JsonbVisibility;
 import javax.persistence.*;
 import javax.validation.constraints.*;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.*;
 
 @Table(name = "Document", schema = "messenger")
 @Entity
 @PrimaryKeyJoinColumn(name = "documentIdentity")
 @JsonbVisibility(JsonProtectedPropertyStrategy.class)
+@XmlRootElement
+@XmlType
 public class Document extends BaseEntity {
 
     private static final byte[] EMPTY_CONTENT = new byte[0];

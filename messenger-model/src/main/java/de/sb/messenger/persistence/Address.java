@@ -8,6 +8,8 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 
 import de.sb.toolbox.bind.JsonProtectedPropertyStrategy;
 
@@ -15,6 +17,8 @@ import java.util.Comparator;
 
 @Embeddable
 @JsonbVisibility(JsonProtectedPropertyStrategy.class)
+@XmlRootElement
+@XmlType
 class Address implements Comparable<Address> {
     private static final Comparator<Address> ADDRESS_COMPARATOR = Comparator.comparing(Address::getPostcode)
             .thenComparing(Address::getCity)

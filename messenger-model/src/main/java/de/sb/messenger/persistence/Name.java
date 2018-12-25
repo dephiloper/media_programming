@@ -10,10 +10,14 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 import java.util.Comparator;
 
 @Embeddable
 @JsonbVisibility(JsonProtectedPropertyStrategy.class)
+@XmlRootElement
+@XmlType
 public class Name implements Comparable<Name> {
     private static final Comparator<Name> NAME_COMPARATOR = Comparator.comparing(Name::getFamily).thenComparing(Name::getGiven);
 

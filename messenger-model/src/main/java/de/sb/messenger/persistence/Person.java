@@ -10,9 +10,7 @@ import javax.json.bind.annotation.JsonbVisibility;
 import javax.persistence.*;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.*;
 
 import de.sb.toolbox.bind.JsonProtectedPropertyStrategy;
 
@@ -44,6 +42,8 @@ import de.sb.toolbox.bind.JsonProtectedPropertyStrategy;
 @Entity
 @PrimaryKeyJoinColumn(name = "personIdentity")
 @JsonbVisibility(JsonProtectedPropertyStrategy.class)
+@XmlRootElement
+@XmlType
 public class Person extends BaseEntity {
 
     private static final byte[] DEFAULT_HASH = HashTools.sha256HashCode("default");
@@ -130,7 +130,8 @@ public class Person extends BaseEntity {
     }
 
     @JsonbTransient
-    @XmlTransient
+    @XmlAttribute
+    @XmlIDREF
     public Document getAvatar() {
         return this.avatar;
     }
@@ -139,15 +140,24 @@ public class Person extends BaseEntity {
         this.avatar = doc;
     }
 
+    /*
+        TODO pls doublecheck!
+        Die Referenz-Getter für Relationen sollten dann mit @XmlTransient annotiert werden, während die entsprechenden
+        Entity-Getter @XmlAttribute und @XmlIDREF erhalten. Beachtet aber dass der Hauptvorteil dieser Vorgehensweise
+        (Marshaling von Objekten mit Graph- statt Baum-Topologie) erst zum Tragen käme sobald ein passendes XML-Schema
+        definiert und eingesetzt würde
+     */
+
     @JsonbProperty
-    @XmlAttribute
+    @XmlTransient
     public long getAvatarReference() {
         if (avatar == null) return 0;
         return avatar.getIdentity();
     }
 
     @JsonbTransient
-    @XmlTransient
+    @XmlElement
+    @XmlIDREF
     public Set<Person> getPeopleObserving() {
         return this.peopleObserving;
     }
@@ -157,7 +167,7 @@ public class Person extends BaseEntity {
     }
 
     @JsonbProperty
-    @XmlElement
+    @XmlTransient
     public HashSet<Long> getPeopleObservingReferences() {
         // magic lambda magic is magic
         // map returns a stream which contains the results of the function Person.getIdentity() of all the set elements
@@ -170,7 +180,8 @@ public class Person extends BaseEntity {
     }
 
     @JsonbTransient
-    @XmlTransient
+    @XmlElement
+    @XmlIDREF
     public Set<Person> getPeopleObserved() {
         return this.peopleObserved;
     }
@@ -180,7 +191,7 @@ public class Person extends BaseEntity {
     }
 
     @JsonbProperty
-    @XmlElement
+    @XmlTransient
     public HashSet<Long> getPeopleObservedReferences() {
         return peopleObserved.stream().map(Person::getIdentity).collect(Collectors.toCollection(HashSet::new));
     }
@@ -196,7 +207,8 @@ public class Person extends BaseEntity {
     }
 
     @JsonbTransient
-    @XmlTransient
+    @XmlElement
+    @XmlIDREF
     public Set<Message> getMessagesAuthored() {
         return this.messagesAuthored;
     }
@@ -208,13 +220,13 @@ public class Person extends BaseEntity {
 
     // TODO in der Beschreibung taucht diese Methode nicht auf
     @JsonbProperty
-    @XmlElement
+    @XmlTransient
     public HashSet<Long> getMessagesAuthoredReferences() {
         return messagesAuthored.stream().map(Message::getIdentity).collect(Collectors.toCollection(HashSet::new));
     }
 
     @JsonbProperty
-    @XmlAttribute
+    @XmlAttribute // TODO xml element?
     public Group getGroup() {
         return this.group;
     }

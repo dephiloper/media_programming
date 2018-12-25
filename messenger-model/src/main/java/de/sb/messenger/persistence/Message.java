@@ -8,13 +8,14 @@ import javax.json.bind.annotation.JsonbVisibility;
 import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.*;
 
 @Table(name = "Message", schema = "messenger")
 @Entity
 @PrimaryKeyJoinColumn(name = "messageIdentity")
 @JsonbVisibility(JsonProtectedPropertyStrategy.class)
+@XmlRootElement
+@XmlType
 public class Message extends BaseEntity {
 
 	@Column(nullable = true, updatable = true)
@@ -48,7 +49,9 @@ public class Message extends BaseEntity {
 		this.body = body;
 	}
 
-	@JsonbTransient @XmlTransient
+	@JsonbTransient
+	@XmlElement
+	@XmlIDREF
 	public Person getAuthor() {
 		return author;
 	}
@@ -57,25 +60,29 @@ public class Message extends BaseEntity {
 		this.author = author;
 	}
 
-	@JsonbTransient @XmlTransient
-	public BaseEntity getSubject() {
-		return subject;
-	}
-
 	// TODO S.14-29: Definiert dazu folgende zusätzliche Methoden, mit ?aufsteigender Reihenfolge bei Mengenergebnissen?
-	@JsonbProperty @XmlAttribute
+	@JsonbProperty
+	@XmlTransient
 	public long getAuthorReference() {
 		if (author == null) return 0;
 		return author.getIdentity();
 	}
 
-	@JsonbProperty @XmlAttribute
-	public long getSubjectReference() {
-		if (subject == null) return 0;
-		return subject.getIdentity();
+	@JsonbTransient
+	@XmlElement
+	@XmlIDREF
+	public BaseEntity getSubject() {
+		return subject;
 	}
 
 	protected void setSubject(BaseEntity subject) {
 		this.subject = subject;
+	}
+
+	@JsonbProperty
+	@XmlTransient
+	public long getSubjectReference() {
+		if (subject == null) return 0;
+		return subject.getIdentity();
 	}
 }
