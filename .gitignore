@@ -1,12 +1,10 @@
 .idea/
 .gradle/
 out/
-dataset/
 build/
 *.iml
 *.class
 target/
-sb-toolbox-1.1/
 gradle/
 gradlew
 gradlew.bat
