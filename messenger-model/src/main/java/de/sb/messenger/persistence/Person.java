@@ -1,6 +1,7 @@
 package de.sb.messenger.persistence;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -46,7 +47,12 @@ import de.sb.toolbox.bind.JsonProtectedPropertyStrategy;
 @XmlType
 public class Person extends BaseEntity {
 
+    // TODO: Person has no first name?
+
     private static final byte[] DEFAULT_HASH = HashTools.sha256HashCode("default");
+
+    // TODO: no comparison of first name (because Person has no first name!?)
+    public static final Comparator<Person> personComparator = Comparator.comparing(Person::getName).thenComparing(Person::getEmail);
 
     // attributes
 
@@ -159,6 +165,7 @@ public class Person extends BaseEntity {
     @XmlElement
     @XmlIDREF
     public Set<Person> getPeopleObserving() {
+        // TODO: sort?
         return this.peopleObserving;
     }
 
@@ -193,7 +200,7 @@ public class Person extends BaseEntity {
     @JsonbProperty
     @XmlTransient
     public HashSet<Long> getPeopleObservedReferences() {
-        return peopleObserved.stream().map(Person::getIdentity).collect(Collectors.toCollection(HashSet::new));
+        return peopleObserved.stream().sorted(personComparator).map(Person::getIdentity).collect(Collectors.toCollection(HashSet::new));
     }
 
     @JsonbTransient

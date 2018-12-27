@@ -11,10 +11,10 @@ import javax.validation.constraints.Positive;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 
 import static de.sb.messenger.persistence.Group.USER;
+import static de.sb.messenger.persistence.Person.personComparator;
 import static de.sb.messenger.rest.BasicAuthenticationFilter.REQUESTER_IDENTITY;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;
@@ -22,7 +22,15 @@ import static javax.ws.rs.core.Response.Status.*;
 @Path("people")
 @Copyright(year = 2018, holders = "Gruppe Drei (Gruppe 5)")
 public class PersonService implements PersistenceManagerFactoryContainer {
-    private static final Comparator<Person> personComparator = Comparator.comparing(Person::getName).thenComparing(Person::getEmail);
+    /* TODO:
+     * Wird durch einen Service eine Relation modifiziert, dann sind nach Speicherung der
+     * Änderungen (i.e. commit) zudem alle Entitäten aus dem 2nd-Level Cache zu entfernen
+     * deren „mappedBy“-Relationsmengen sich dadurch ändern; diese Spiegel-Mengen werden
+     * weder im 1st-Level Cache noch im 2nd-Level Cache automatisch verwaltet:
+     *
+     * TODO:
+     * 3.3 fehlt. Ist das beabsichtigt?
+     */
 
     private static final String QUERY_STRING = "SELECT p from Person as p WHERE "
             + "(:familyName is null or p.familyName = :familyName) and "
@@ -165,6 +173,8 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         Person person = entityManager.find(Person.class, entityIdentity);
 
         if (person == null)
+            // TODO: Returns the person matching the given identity,
+            // or the person matching the given header field Requester-Identity if the former is zero.
             throw new ClientErrorException(NOT_FOUND);
         return person;
     }
