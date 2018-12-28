@@ -47,11 +47,8 @@ import de.sb.toolbox.bind.JsonProtectedPropertyStrategy;
 @XmlType
 public class Person extends BaseEntity {
 
-    // TODO: Person has no first name?
-
     private static final byte[] DEFAULT_HASH = HashTools.sha256HashCode("default");
 
-    // TODO: no comparison of first name (because Person has no first name!?)
     public static final Comparator<Person> personComparator = Comparator.comparing(Person::getName).thenComparing(Person::getEmail);
 
     // attributes
@@ -101,6 +98,7 @@ public class Person extends BaseEntity {
 
 
     // TODO auf jeden Fall REFRESH, MERGE, und DETACH, falls in der Datenbank so definiert auch REMOVE: die DB definiert hier restricted remove aber es gibt keine OneToMany gegenseite.. wo definiert man es dann?
+    // Sollen ManyToOne Beziehungen auch die Cascade Eigenschaften bekommen?
     @NotNull
     @ManyToOne
     @JoinColumn(name = "avatarReference", referencedColumnName = "documentIdentity")
@@ -146,14 +144,6 @@ public class Person extends BaseEntity {
         this.avatar = doc;
     }
 
-    /*
-        TODO pls doublecheck!
-        Die Referenz-Getter für Relationen sollten dann mit @XmlTransient annotiert werden, während die entsprechenden
-        Entity-Getter @XmlAttribute und @XmlIDREF erhalten. Beachtet aber dass der Hauptvorteil dieser Vorgehensweise
-        (Marshaling von Objekten mit Graph- statt Baum-Topologie) erst zum Tragen käme sobald ein passendes XML-Schema
-        definiert und eingesetzt würde
-     */
-
     @JsonbProperty
     @XmlTransient
     public long getAvatarReference() {
@@ -165,7 +155,6 @@ public class Person extends BaseEntity {
     @XmlElement
     @XmlIDREF
     public Set<Person> getPeopleObserving() {
-        // TODO: sort?
         return this.peopleObserving;
     }
 
@@ -225,7 +214,6 @@ public class Person extends BaseEntity {
     }
 
 
-    // TODO in der Beschreibung taucht diese Methode nicht auf
     @JsonbProperty
     @XmlTransient
     public HashSet<Long> getMessagesAuthoredReferences() {
@@ -233,7 +221,7 @@ public class Person extends BaseEntity {
     }
 
     @JsonbProperty
-    @XmlAttribute // TODO xml element?
+    @XmlElement
     public Group getGroup() {
         return this.group;
     }
