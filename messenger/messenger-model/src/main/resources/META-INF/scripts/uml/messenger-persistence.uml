@@ -1,0 +1,20 @@
+// UML entity-relationship diagram for JPA persistence
+// Render using http://yuml.me/diagram/plain/class/draw
+[Comparable(Type)| +compareTo(other:Type):int; ]
+[Group| +_ADMIN:Group; +_USER:Group; | ]-.-^[Comparable(Type)]
+[Name| -family:char 1..31; -given:char 1..31; | ...]-.-^[Comparable(Type)]
+[Address| -street:char 0..63; -postcode:char 0..15; -city:char 1..63; | ...]-.-^[Comparable(Type)]
+[BaseEntity| -identity:long; -version:int; -creationTimestamp:long; ...; | +getIdentity():long; #setIdentity(:long); +getCreationTimestamp():long; #setCreationTimestamp(:long); +toString():char 0..*; ...; ]-.-^[Comparable(Type)]
+
+[Document| -contentHash:byte 32..32; -contentType:char 1..63; -content:byte 1..16777215; | +_scaledImageContent;(fileType:char 0..* content:byte 0..* width:int height:int):byte 0..*; ...; ]-^[BaseEntity]
+[Message| -body:char 1..4093; ...; | ...; ]-^[BaseEntity]
+[Person| -email:char 1..128; -passwordHash:byte 32..32; ...; | +getName():Name; #setName(:Name); +getAddress():Address; #setAddress(:Address); ...; ]-^[BaseEntity]
+[Person]++-name>[Name]
+[Person]++-address>[Address]
+[Person]+-group>[Group]
+
+[Person]0..* - avatar 1>[Document]
+[Person]<peopleObserving 0..* - peopleObserved 0..*>[Person]
+[Person]<author 1 - messagesAuthored 0..*>[Message]
+[BaseEntity]<subject 1 - messagesCaused 0..*>[Message]
+[BaseEntity]-[note: toString(): return class-name + '@' + identity ]

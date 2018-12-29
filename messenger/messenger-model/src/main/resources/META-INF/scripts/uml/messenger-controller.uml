@@ -1,0 +1,9 @@
+// UML entity-relationship diagram for messenger-controller
+// Render using http://yuml.me/diagram/plain/class/draw
+[EntityCache| +requestURI:String; +content:Object; | +get():async; +put(entity:Object); +remove(entityIdentity:Number); +clear(); ]
+[Controller| +_sessionOwner:Object; +_entityCache:EnityCache; | +display(); +displayError(error:Error); +xhr(resource method headers body type username password):Promise; +refreshAvatarSlider(sliderElement personIdentities clickAction)]
+[WelcomeController|| +display(); +login():async;]-^[Controller]
+[PreferencesController|| +display(); +displaySessionOwner(); +persistSessionOwner():async; +persistAvatar(file:File):async;]-^[Controller]
+[PeopleController|| +display(); +queryPeople():async; +toggleObservation(personIdentity:Number):async;]-^[Controller]
+[MessagesController|| +display(); +displayMessages(parentElement:Element messages:Message 0..*):async; +displayRootMessages():async; +toggleChildMessages(messageElement:Element messageIdentity:Number):async; +displayMessageEditor(parentElement:Element subjectIdentity:Number); +persistMessage(messageElement:Element subjectIdentity:Number):async;]-^[Controller]
+[Controller]->[EntityCache]
