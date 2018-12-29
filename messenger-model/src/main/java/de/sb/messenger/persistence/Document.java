@@ -26,7 +26,7 @@ public class Document extends BaseEntity {
     @Column(nullable = false, updatable = true)
     private byte[] contentHash;
 
-    @Size(min = 1, max = 2^24-1)
+    @Size(min = 1)
     @NotNull
     @NotEmpty
     @Column(nullable = false, updatable = true)
