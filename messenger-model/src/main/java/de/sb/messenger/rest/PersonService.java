@@ -4,9 +4,7 @@ import de.sb.messenger.persistence.*;
 import de.sb.toolbox.Copyright;
 import de.sb.toolbox.net.RestJpaLifecycleProvider;
 
-import javax.persistence.EntityManager;
-import javax.persistence.RollbackException;
-import javax.persistence.TypedQuery;
+import javax.persistence.*;
 import javax.validation.constraints.Positive;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
@@ -33,12 +31,12 @@ public class PersonService implements PersistenceManagerFactoryContainer {
      */
 
     private static final String QUERY_STRING = "SELECT p from Person as p WHERE "
-            + "(:familyName is null or p.familyName = :familyName) and "
-            + "(:givenName is null or p.givenName = :givenName) and "
+            + "(:surname is null or p.name.family = :surname) and "
+            + "(:forename is null or p.name.given = :forename) and "
             + "(:email is null or p.email = :email) and "
-            + "(:street is null or p.street = :street) and "
-            + "(:city is null or p.city = :city) and "
-            + "(:postCode is null or p.postCode) and "
+            + "(:street is null or p.address.street = :street) and "
+            + "(:city is null or p.address.city = :city) and "
+            + "(:postcode is null or p.address.postcode = :postcode) and "
             + "(:group is null or p.group = :group)";
 
     /**
@@ -53,31 +51,31 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             // Default Values?
             @QueryParam("resultOffset") int resultOffset,
             @QueryParam("resultLimit") int resultLimit,
-            @QueryParam("familyName") String familyName,
-            @QueryParam("givenName") String givenName,
+            @QueryParam("surname") String familyName,
+            @QueryParam("forename") String givenName,
             @QueryParam("email") String email,
             @QueryParam("street") String street,
-            @QueryParam("postCode") String postCode,
+            @QueryParam("postcode") String postCode,
             @QueryParam("city") String city,
-            @QueryParam("group") String group) {
+            @QueryParam("groupAlias") String group) {
 
         final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
 
-        TypedQuery<Person> query = entityManager.createQuery(QUERY_STRING, Person.class);
+        TypedQuery<Person> query = entityManager.createQuery("select p from Person p", Person.class);
 
-        if (resultOffset > 0) query.setFirstResult(resultOffset);
+        /*if (resultOffset > 0) query.setFirstResult(resultOffset);
         if (resultLimit > 0) query.setMaxResults(resultLimit);
-        if (familyName != null) query.setParameter("familyName", familyName);
-        if (givenName != null) query.setParameter("givenName", givenName);
-        if (email != null) query.setParameter("email", email);
-        if (street != null) query.setParameter("street", street);
-        if (postCode != null) query.setParameter("postCode", postCode);
-        if (city != null) query.setParameter("city", city);
-        if (group != null) query.setParameter("group", group);
-
+        query.setParameter("surname", familyName);
+        query.setParameter("forename", givenName);
+        query.setParameter("email", email);
+        query.setParameter("street", street);
+        query.setParameter("postcode", postCode);
+        query.setParameter("city", city);
+        query.setParameter("group", group);
+*/
         List<Person> peopleList = query.getResultList();
         peopleList.sort(personComparator);
-        return peopleList;       
+        return peopleList;
     }
 
     /**
@@ -124,9 +122,9 @@ public class PersonService implements PersistenceManagerFactoryContainer {
                     entityManager.getTransaction().commit();
                     affectedPersonId = personTemplate.getIdentity();
                 } catch (final RollbackException exception) {
-                	entityManager.getTransaction().rollback();
+                    entityManager.getTransaction().rollback();
                     throw new ClientErrorException(CONFLICT);
-                } finally {                    
+                } finally {
                     entityManager.getTransaction().begin();
                 }
                 break;
@@ -144,10 +142,10 @@ public class PersonService implements PersistenceManagerFactoryContainer {
                     entityManager.getTransaction().commit();
                     affectedPersonId = personTemplate.getIdentity();
                 } catch (final RollbackException exception) {
-                	entityManager.getTransaction().rollback();
+                    entityManager.getTransaction().rollback();
                     throw new ClientErrorException(CONFLICT);
                 } finally {
-                	entityManager.getTransaction().begin();
+                    entityManager.getTransaction().begin();
                 }
 
                 break;
@@ -169,7 +167,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
     public Person queryPerson(
             @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
             @PathParam("id") @Positive final long entityIdentity) {
-    	final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
+        final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
         Person person = entityManager.find(Person.class, entityIdentity);
 
         if (person == null)
@@ -197,7 +195,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             @PathParam("id") @Positive final long entityIdentity,
             @QueryParam("width") final long width,
             @QueryParam("height") final long height) {
-    	final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
+        final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
 
         Person person = entityManager.find(Person.class, entityIdentity);
 
@@ -238,7 +236,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             @HeaderParam(REQUESTER_IDENTITY) final long requesterIdentity,
             @HeaderParam("Content-Type") String type, byte[] body) {
 
-    	final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
+        final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
         Person requester = entityManager.find(Person.class, requesterIdentity);
         Person person = entityManager.find(Person.class, personIdentity);
 
@@ -270,10 +268,10 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             try {
                 entityManager.getTransaction().commit();
             } catch (final RollbackException exception) {
-            	entityManager.getTransaction().rollback();
-            	throw new ClientErrorException(CONFLICT);
+                entityManager.getTransaction().rollback();
+                throw new ClientErrorException(CONFLICT);
             } finally {
-            	entityManager.getTransaction().begin();
+                entityManager.getTransaction().begin();
             }
         }
         return person.getIdentity();
@@ -290,7 +288,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
     public Collection<Message> queryPersonMessages(
             @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
             @PathParam("id") @Positive final long entityIdentity) {
-    	final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
+        final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
         Person person = entityManager.find(Person.class, entityIdentity);
         Person requester = entityManager.find(Person.class, requesterIdentity);
 
@@ -318,7 +316,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
             @PathParam("id") @Positive final long entityIdentity) {
 
-    	final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
+        final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
         Person requester = entityManager.find(Person.class, requesterIdentity);
         Person person = new Person(new Document() {
         });
