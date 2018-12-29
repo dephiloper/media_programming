@@ -54,7 +54,6 @@ public class Person extends BaseEntity {
     // attributes
 
     @Size(min = 1, max = 128)
-    @NotNull
     @NotEmpty
     @Column(nullable = true, updatable = true)
     @Email

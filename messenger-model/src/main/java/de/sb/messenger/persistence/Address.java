@@ -17,16 +17,18 @@ import java.util.Comparator;
 @JsonbVisibility(JsonProtectedPropertyStrategy.class)
 @XmlRootElement
 @XmlType
-class Address implements Comparable<Address> {
+public class Address implements Comparable<Address> {
     private static final Comparator<Address> ADDRESS_COMPARATOR = Comparator.comparing(Address::getPostcode)
             .thenComparing(Address::getCity)
             .thenComparing(Address::getStreet);
 
     @Size(min = 0, max = 63)
+    @NotNull
     @Column(nullable = false, updatable = true)
     private String street;
 
     @Size(min = 0, max = 15)
+    @NotNull
     @Column(nullable = false, updatable = true)
     private String postcode;
 

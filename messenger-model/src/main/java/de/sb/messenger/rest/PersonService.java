@@ -61,9 +61,9 @@ public class PersonService implements PersistenceManagerFactoryContainer {
 
         final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
 
-        TypedQuery<Person> query = entityManager.createQuery("select p from Person p", Person.class);
+        TypedQuery<Person> query = entityManager.createQuery(QUERY_STRING, Person.class);
 
-        /*if (resultOffset > 0) query.setFirstResult(resultOffset);
+        if (resultOffset > 0) query.setFirstResult(resultOffset);
         if (resultLimit > 0) query.setMaxResults(resultLimit);
         query.setParameter("surname", familyName);
         query.setParameter("forename", givenName);
@@ -72,10 +72,10 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         query.setParameter("postcode", postCode);
         query.setParameter("city", city);
         query.setParameter("group", group);
-*/
-        List<Person> peopleList = query.getResultList();
-        peopleList.sort(personComparator);
-        return peopleList;
+
+        List<Person> people = query.getResultList();
+        people.sort(personComparator);
+        return people;
     }
 
     /**
