@@ -1,6 +1,20 @@
 package de.sb.messenger.rest;
 
-import static java.util.logging.Level.INFO;
+import com.sun.net.httpserver.HttpServer;
+import de.sb.toolbox.Copyright;
+import de.sb.toolbox.net.RestCorsHeaderProvider;
+import de.sb.toolbox.net.RestJpaLifecycleProvider;
+import de.sb.toolbox.net.RestResponseCodeProvider;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
+import org.glassfish.jersey.jdkhttp.JdkHttpServerFactory;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.WebTarget;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -9,25 +23,13 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Logger;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
-import org.glassfish.jersey.jdkhttp.JdkHttpServerFactory;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import com.sun.net.httpserver.HttpServer;
-import de.sb.toolbox.Copyright;
-import de.sb.toolbox.net.RestCorsHeaderProvider;
-import de.sb.toolbox.net.RestJpaLifecycleProvider;
-import de.sb.toolbox.net.RestResponseCodeProvider;
+
+import static java.util.logging.Level.INFO;
 
 
 /**
  * JUnit base class for service tests. It realizes once-per-all-tests embedded HTTP container
- * start/stop on {@link http://localhost:8001/services} for REST service access, and
+ * start/stop on http://localhost:8001/services for REST service access, and
  * once-per-any-test entity cleanup based on {@linkplain EntityService}. Note that the HTTP
  * container can alternatively be started as a separate application.
  */

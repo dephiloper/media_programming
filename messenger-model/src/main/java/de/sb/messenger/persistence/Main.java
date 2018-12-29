@@ -11,7 +11,7 @@ public class Main {
         // mysql -uroot -p
         EntityManagerFactory factory = Persistence.createEntityManagerFactory("messenger");
         EntityManager em = factory.createEntityManager();
-        List<Person> persons = em.createQuery("SELECT p FROM Person p", Person.class).getResultList();
+        //List<Person> persons = em.createQuery("SELECT p FROM Person p", Person.class).getResultList();
     }
 
 }

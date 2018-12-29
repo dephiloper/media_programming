@@ -9,11 +9,10 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import javax.validation.Validation;
 import javax.validation.ValidatorFactory;
+import de.sb.toolbox.Copyright;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import de.sb.toolbox.Copyright;
-
 
 /**
  * JUnit base class for entity tests. It realizes once-per-all-tests entity manager factory

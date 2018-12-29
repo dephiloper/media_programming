@@ -90,10 +90,10 @@ public class Person extends BaseEntity {
     private Group group;
 
     @NotNull
-    @ManyToMany(mappedBy = "peopleObserved", cascade = {CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REMOVE})
+    @ManyToMany(mappedBy = "peopleObserved", cascade = {/*CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REMOVE*/})
     private Set<Person> peopleObserving;
 
-    @OneToMany(mappedBy = "author", cascade = {CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REMOVE})
+    @OneToMany(mappedBy = "author", cascade = {/*CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REMOVE*/})
     private Set<Message> messagesAuthored;
 
 
