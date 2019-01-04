@@ -21,14 +21,17 @@ import static javax.ws.rs.core.Response.Status.*;
 @Copyright(year = 2018, holders = "Gruppe Drei (Gruppe 5)")
 public class MessageService implements PersistenceManagerFactoryContainer {
 
+    private static final String QUERY_STRING = "SELECT m from Message as m WHERE "
+            + "(:fragment is null or m.body like :fragment) and "
+            + "(:lowerCreationTimestamp is null or m.creationTimestamp >= :lowerCreationTimestamp)"
+            + "(:upperCreationTimestamp is null or m.creationTimestamp <= :lowerCreationTimestamp)";
+
     /**
      * Returns the messages matching the given criteria, with missing
      * parameters identifying omitted criteria, sorted by identity. Search criteria should be a
      * message body fragment (compare using the like operator), an upper/lower creation
      * timestamp, plus resultOffset and resultLimit which define a result range.
      */
-
-    // TODO Query string
     @GET
     @Produces({APPLICATION_JSON, APPLICATION_XML})
     public Collection<Message> queryMessages(
@@ -36,50 +39,16 @@ public class MessageService implements PersistenceManagerFactoryContainer {
             @QueryParam("lowerCreationTimestamp") Long lowerCreationTimestamp,
             @QueryParam("upperCreationTimestamp") Long upperCreationTimestamp,
             @QueryParam("resultOffset") Integer resultOffset,
-            @QueryParam("resultLimit") Integer resultLimit) {
-    	
+            @QueryParam("resultLimit") Integer resultLimit
+    ) {
     	final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
+        TypedQuery<Message> query = entityManager.createQuery(QUERY_STRING, Message.class);
 
-        StringBuilder queryStrings = new StringBuilder();
-        queryStrings.append("select message from Message as message");
-
-        boolean criteria_present = false;
-        if (fragment != null) {
-            queryStrings.append(" where\n(message.body like :fragment)");
-            criteria_present = true;
-        }
-        if (lowerCreationTimestamp != null) {
-            if (criteria_present)
-                queryStrings.append(" and\n");
-            else
-                queryStrings.append(" where\n");
-
-            queryStrings.append("(message.creationTimestamp >= :lowerCreationTimestamp)");
-            criteria_present = true;
-        }
-        if (upperCreationTimestamp != null) {
-            if (criteria_present)
-                queryStrings.append(" and\n");
-            else
-                queryStrings.append(" where\n");
-            queryStrings.append("(message.creationTimestamp <= :upperCreationTimestamp)");
-        }
-
-        String queryString = queryStrings.toString();
-
-        TypedQuery<Message> query = entityManager.createQuery(queryString, Message.class);
-
-        if (resultOffset != null)
-            query.setFirstResult(resultOffset);
-        if (resultLimit != null)
-            query.setMaxResults(resultLimit);
-
-        if (fragment != null)
-            query.setParameter("fragment", fragment);
-        if (lowerCreationTimestamp != null)
-            query.setParameter("lowerCreationTimestamp", lowerCreationTimestamp);
-        if (upperCreationTimestamp != null)
-            query.setParameter("upperCreationTimestamp", upperCreationTimestamp);
+        if (resultOffset > 0) query.setFirstResult(resultOffset);
+        if (resultLimit > 0) query.setMaxResults(resultLimit);
+        query.setParameter("fragment", fragment);
+        query.setParameter("lowerCreationTimestamp", lowerCreationTimestamp);
+        query.setParameter("upperCreationTimestamp", upperCreationTimestamp);
         
         List<Message> messageList = query.getResultList();
         messageList.sort(Comparator.comparing(Message::getIdentity));
@@ -97,9 +66,7 @@ public class MessageService implements PersistenceManagerFactoryContainer {
         final EntityManager entityManager = entityManagerFactory.createEntityManager();
         Message message = entityManager.find(Message.class, messageIdentity);
 
-        if (message == null)
-            throw new ClientErrorException(NOT_FOUND);
-
+        if (message == null) throw new ClientErrorException(NOT_FOUND);
         return message;
     }
 
