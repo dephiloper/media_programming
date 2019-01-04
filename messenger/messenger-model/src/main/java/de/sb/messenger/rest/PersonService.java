@@ -5,14 +5,18 @@ import de.sb.toolbox.Copyright;
 import de.sb.toolbox.net.RestJpaLifecycleProvider;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
 import static de.sb.messenger.persistence.Group.USER;
-import static de.sb.messenger.persistence.Person.personComparator;
+import static de.sb.messenger.persistence.Person.PERSON_COMPARATOR;
 import static de.sb.messenger.rest.BasicAuthenticationFilter.REQUESTER_IDENTITY;
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;
@@ -45,6 +49,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
      * Search criteria should be any normal property of person and it composites, except
      * identity and password, plus resultOffset and resultLimit which define a result range.
      */
+    // TODO creationTImestamp upper lower
     @GET
     @Produces({APPLICATION_JSON, APPLICATION_XML})
     public Collection<Person> queryPeople(
@@ -74,7 +79,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         query.setParameter("group", group);
 
         List<Person> people = query.getResultList();
-        people.sort(personComparator);
+        people.sort(PERSON_COMPARATOR);
         return people;
     }
 
@@ -95,15 +100,17 @@ public class PersonService implements PersistenceManagerFactoryContainer {
     public long createUpdatePerson(
             @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
             @HeaderParam("Set-Password") String setPassword,
-            Person personTemplate) {
-
+            @NotNull Person personTemplate
+    ) {
         long affectedPersonId = -1;
         final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
         Person requester = entityManager.find(Person.class, requesterIdentity);
-
-        // check if requester is null
         if (requester == null) throw new ClientErrorException(FORBIDDEN);
 
+        if (personTemplate.getIdentity() != requesterIdentity && requester.getGroup() != Group.ADMIN)
+            throw new ClientErrorException(FORBIDDEN);
+
+        // TODO keine fallunterscheidung!
 
         switch (requester.getGroup()) {
             // check if requester is Admin
@@ -166,14 +173,13 @@ public class PersonService implements PersistenceManagerFactoryContainer {
     @Produces({APPLICATION_JSON, APPLICATION_XML})
     public Person queryPerson(
             @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
-            @PathParam("id") @Positive final long entityIdentity) {
+            @PathParam("id") @PositiveOrZero final long personIdentity
+    ) {
         final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
-        Person person = entityManager.find(Person.class, entityIdentity);
+        final long identity = personIdentity == 0 ? requesterIdentity : personIdentity;
+        Person person = entityManager.find(Person.class, identity);
 
-        if (person == null)
-            // TODO: Returns the person matching the given identity,
-            // or the person matching the given header field Requester-Identity if the former is zero.
-            throw new ClientErrorException(NOT_FOUND);
+        if (person == null) throw new ClientErrorException(NOT_FOUND);
         return person;
     }
 
@@ -192,28 +198,24 @@ public class PersonService implements PersistenceManagerFactoryContainer {
     @Produces({WILDCARD})
     public Response queryAvatar(
             @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
-            @PathParam("id") @Positive final long entityIdentity,
-            @QueryParam("width") final long width,
-            @QueryParam("height") final long height) {
+            @PathParam("id") @Positive final long personIdentity,
+            @QueryParam("width") final int width,
+            @QueryParam("height") final int height
+    ) {
         final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
 
-        Person person = entityManager.find(Person.class, entityIdentity);
+        final Person person = entityManager.find(Person.class, personIdentity);
+        if (person == null) throw new ClientErrorException(NOT_FOUND);
 
-        Response.ResponseBuilder rBuild;
+        final Document avatar = person.getAvatar();
 
-        if (person != null && person.getAvatar() != null) {
-            Document image = person.getAvatar();
-
-            if (width != 0 && height != 0) {
-                rBuild = Response.ok(person.getAvatar().scaledImageContent("jpg", image.getContent(), (int) width, (int) height));
-            } else {
-                rBuild = Response.status(Response.Status.BAD_REQUEST);
-            }
+        final byte[] content;
+        if (width == 0 || height == 0) {
+            content = avatar.getContent();
         } else {
-            rBuild = Response.status(Response.Status.BAD_REQUEST);
+            content = Document.scaledImageContent("jpg", avatar.getContent(), width, height);
         }
-
-        return rBuild.build();
+        return Response.ok(content, avatar.getContentType()).build();
     }
 
     /**
@@ -234,47 +236,56 @@ public class PersonService implements PersistenceManagerFactoryContainer {
     public long updateAvatar(
             @PathParam("id") final long personIdentity,
             @HeaderParam(REQUESTER_IDENTITY) final long requesterIdentity,
-            @HeaderParam("Content-Type") String type, byte[] body) {
-
+            @HeaderParam("Content-Type") String contentType,
+            @NotNull byte[] content
+    ) {
         final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
         Person requester = entityManager.find(Person.class, requesterIdentity);
         Person person = entityManager.find(Person.class, personIdentity);
 
-        if (requester == null)
-            throw new ClientErrorException(NOT_FOUND);
+        if (requester == null) throw new ClientErrorException(NOT_FOUND);
 
-        if (person == null) {
-            throw new ClientErrorException(NOT_FOUND);
-        } else if (personIdentity == requesterIdentity || requester.getGroup() == Group.ADMIN) {
+        if (person == null) throw new ClientErrorException(NOT_FOUND);
 
-            // if a Document is found, the request body contains the exact picture which can be found in the database
-            List<Document> docs = entityManager.createQuery("SELECT doc from Document doc WHERE contentHash =" + HashTools.sha256HashCode(body), Document.class).getResultList();
-            Document doc = docs.get(0);
+        if (personIdentity != requesterIdentity && requester.getGroup() != Group.ADMIN) throw new ClientErrorException(FORBIDDEN);
 
-            entityManager.getTransaction().begin();
+        // if a Document is found, the request body contains the exact picture which can be found in the database
+        // TODO Parameter
+        byte[] contentHash = HashTools.sha256HashCode(content);
+        List<Document> docs = entityManager.createQuery("SELECT doc from Document doc WHERE contentHash =" + contentHash, Document.class).getResultList();
 
-            // set avatar default
-            if (body == null) {
-                person.setAvatar(entityManager.find(Document.class, 1L));
-            } else if (doc == null) {
-                doc = new Document();
-                doc.setContent(body);
-                doc.setContentType(type);
-            }
+        Document doc;
 
-            person.setAvatar(doc);
-
-            entityManager.merge(person);
-            try {
-                entityManager.getTransaction().commit();
-            } catch (final RollbackException exception) {
-                entityManager.getTransaction().rollback();
-                throw new ClientErrorException(CONFLICT);
-            } finally {
-                entityManager.getTransaction().begin();
-            }
+        if (docs.isEmpty()) {
+            doc = new Document();
+            doc.setContent(content);
+            doc.setContentType(contentType);
+            entityManager.persist(doc);
+        } else {
+            doc = docs.get(0);
+            doc.setContentType(contentType);
+            entityManager.flush();
         }
+
+        commitBegin(entityManager);
+
+        person.setAvatar(doc);
+        entityManager.flush();
+
+        commitBegin(entityManager);
+
         return person.getIdentity();
+    }
+
+    private void commitBegin(EntityManager entityManager) {
+        try {
+            entityManager.getTransaction().commit();
+        } catch (final RollbackException exception) {
+            entityManager.getTransaction().rollback();
+            throw new ClientErrorException(CONFLICT);
+        } finally {
+            entityManager.getTransaction().begin();
+        }
     }
 
     /**
@@ -287,7 +298,8 @@ public class PersonService implements PersistenceManagerFactoryContainer {
     @Produces({APPLICATION_JSON, APPLICATION_XML})
     public Collection<Message> queryPersonMessages(
             @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
-            @PathParam("id") @Positive final long entityIdentity) {
+            @PathParam("id") @Positive final long entityIdentity
+    ) {
         final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
         Person person = entityManager.find(Person.class, entityIdentity);
         Person requester = entityManager.find(Person.class, requesterIdentity);
@@ -295,10 +307,11 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         if (requesterIdentity == entityIdentity || requester.getGroup() == Group.ADMIN)
             person = entityManager.find(Person.class, entityIdentity);
 
-        if (person == null)
-            throw new ClientErrorException(NOT_FOUND);
+        if (person == null) throw new ClientErrorException(NOT_FOUND);
 
-        return person.getMessagesAuthored();
+        final List<Message> messages = new ArrayList<>(person.getMessagesAuthored());
+        messages.sort(Comparator.naturalOrder());
+        return messages;
     }
 
     /**
@@ -314,8 +327,8 @@ public class PersonService implements PersistenceManagerFactoryContainer {
     @Produces({APPLICATION_JSON, APPLICATION_XML})
     public Collection<Person> updatePeopleObserved(
             @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
-            @PathParam("id") @Positive final long entityIdentity) {
-
+            @PathParam("id") @Positive final long entityIdentity
+    ) {
         final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
         Person requester = entityManager.find(Person.class, requesterIdentity);
         Person person = new Person(new Document() {
@@ -327,6 +340,8 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         if (person == null)
             throw new ClientErrorException(NOT_FOUND);
 
-        return person.getPeopleObserved();
+        final List<Person> people = new ArrayList<>(person.getPeopleObserved());
+        people.sort(PERSON_COMPARATOR);
+        return people;
     }
 }

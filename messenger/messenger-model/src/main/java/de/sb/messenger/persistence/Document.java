@@ -44,8 +44,8 @@ public class Document extends BaseEntity {
         this.contentHash = EMPTY_CONTENT_HASH;
     }
 
-    public byte[] scaledImageContent(String fileType, byte[] content, int width, int height) {
-        // TODO
+    public static byte[] scaledImageContent(String fileType, byte[] content, int width, int height) {
+        // TODO load from moodle
         byte[] imageContent = new byte[0];
         return imageContent;
     }

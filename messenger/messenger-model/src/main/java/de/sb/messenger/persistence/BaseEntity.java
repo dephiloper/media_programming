@@ -55,12 +55,12 @@ public class BaseEntity implements Comparable<BaseEntity> {
 
     @NotNull
     @Positive
-    @Column(nullable = false, updatable = false, insertable = false)
+    @Column(nullable = false, updatable = false, insertable = true)
     private int version;
 
     @NotNull
     @PositiveOrZero
-    @Column(nullable = false, updatable = false, insertable = false)
+    @Column(nullable = false, updatable = false, insertable = true)
     private long creationTimestamp;
 
     @OneToMany(mappedBy = "subject", cascade = {CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REMOVE})

@@ -22,11 +22,11 @@ public class Message extends BaseEntity {
 	@NotEmpty
 	private String body;
 	
-	@ManyToOne
+	@ManyToOne(optional = false)
 	@JoinColumn(name = "authorReference", nullable=false, updatable=false)
 	private Person author;
 	
-	@ManyToOne
+	@ManyToOne(optional = false)
 	@JoinColumn(name = "subjectReference", nullable=false, updatable=false)
 	private BaseEntity subject;
 	

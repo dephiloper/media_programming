@@ -27,7 +27,8 @@ public class MessageService implements PersistenceManagerFactoryContainer {
      * message body fragment (compare using the like operator), an upper/lower creation
      * timestamp, plus resultOffset and resultLimit which define a result range.
      */
-    
+
+    // TODO Query string
     @GET
     @Produces({APPLICATION_JSON, APPLICATION_XML})
     public Collection<Message> queryMessages(
@@ -114,9 +115,9 @@ public class MessageService implements PersistenceManagerFactoryContainer {
     @Produces(TEXT_PLAIN)
     @Consumes(TEXT_PLAIN)
     public long createMessage(@NotNull String body,
-                                @Positive @QueryParam("subjectReference") long subjectReference,
-                                @Positive @HeaderParam("Requester-Identity") long requesterIdentity) {
-
+                              @Positive @QueryParam("subjectReference") long subjectReference,
+                              @Positive @HeaderParam("Requester-Identity") long requesterIdentity
+    ) {
         final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
 
         Person requester = entityManager.find(Person.class, requesterIdentity);
@@ -125,7 +126,8 @@ public class MessageService implements PersistenceManagerFactoryContainer {
         BaseEntity subject = entityManager.find(BaseEntity.class, subjectReference);
         if (subject == null) throw new ClientErrorException(NOT_FOUND);
 
-        Message message = new Message(requester, subject);
+        final Message message = new Message(requester, subject);
+        message.setBody(body);
         entityManager.persist(message);
         try {
         	entityManager.getTransaction().commit();

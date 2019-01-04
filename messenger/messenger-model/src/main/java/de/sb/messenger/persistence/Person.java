@@ -49,7 +49,7 @@ public class Person extends BaseEntity {
 
     private static final byte[] DEFAULT_HASH = HashTools.sha256HashCode("default");
 
-    public static final Comparator<Person> personComparator = Comparator.comparing(Person::getName).thenComparing(Person::getEmail);
+    public static final Comparator<Person> PERSON_COMPARATOR = Comparator.comparing(Person::getName).thenComparing(Person::getEmail);
 
     // attributes
 
@@ -89,18 +89,16 @@ public class Person extends BaseEntity {
     private Group group;
 
     @NotNull
-    @ManyToMany(mappedBy = "peopleObserved", cascade = {/*CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REMOVE*/})
+    @ManyToMany(mappedBy = "peopleObserved", cascade = {CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REMOVE})
     private Set<Person> peopleObserving;
 
-    @OneToMany(mappedBy = "author", cascade = {/*CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REMOVE*/})
+    @OneToMany(mappedBy = "author", cascade = {CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REMOVE})
     private Set<Message> messagesAuthored;
 
 
-    // TODO auf jeden Fall REFRESH, MERGE, und DETACH, falls in der Datenbank so definiert auch REMOVE: die DB definiert hier restricted remove aber es gibt keine OneToMany gegenseite.. wo definiert man es dann?
-    // Sollen ManyToOne Beziehungen auch die Cascade Eigenschaften bekommen?
     @NotNull
-    @ManyToOne
-    @JoinColumn(name = "avatarReference", referencedColumnName = "documentIdentity")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "avatarReference", referencedColumnName = "documentIdentity", nullable = false, updatable = true) // TODO add to all join collouns
     private Document avatar;
 
     // constructors
@@ -163,14 +161,8 @@ public class Person extends BaseEntity {
 
     @JsonbProperty
     @XmlTransient
-    public HashSet<Long> getPeopleObservingReferences() {
-        // magic lambda magic is magic
-        // map returns a stream which contains the results of the function Person.getIdentity() of all the set elements
-        // collect allows repacking elements into a specified data structure
-        // Collectors.toList or Collectors.toSet does not specify a particular implementation therefore toCollection
-        // is used w/ the command to use the HashSet implementation pretty neat!
-        // https://stackoverflow.com/a/30082600/10547035 <3
-        return peopleObserving.stream().map(Person::getIdentity).collect(Collectors.toCollection(HashSet::new));
+    public long[] getPeopleObservingReferences() {
+        return peopleObserving.stream().mapToLong(Person::getIdentity).sorted().toArray();
 
     }
 
@@ -187,8 +179,8 @@ public class Person extends BaseEntity {
 
     @JsonbProperty
     @XmlTransient
-    public HashSet<Long> getPeopleObservedReferences() {
-        return peopleObserved.stream().sorted(personComparator).map(Person::getIdentity).collect(Collectors.toCollection(HashSet::new));
+    public long[] getPeopleObservedReferences() {
+        return peopleObserved.stream().mapToLong(Person::getIdentity).sorted().toArray();
     }
 
     @JsonbTransient
@@ -215,8 +207,8 @@ public class Person extends BaseEntity {
 
     @JsonbProperty
     @XmlTransient
-    public HashSet<Long> getMessagesAuthoredReferences() {
-        return messagesAuthored.stream().map(Message::getIdentity).collect(Collectors.toCollection(HashSet::new));
+    public long[] getMessagesAuthoredReferences() {
+        return messagesAuthored.stream().mapToLong(Message::getIdentity).sorted().toArray();
     }
 
     @JsonbProperty
