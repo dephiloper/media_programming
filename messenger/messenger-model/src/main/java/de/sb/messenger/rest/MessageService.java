@@ -96,6 +96,7 @@ public class MessageService implements PersistenceManagerFactoryContainer {
         final Message message = new Message(requester, subject);
         message.setBody(body);
         entityManager.persist(message);
+
         try {
         	entityManager.getTransaction().commit();
         } catch (final RollbackException exception) {

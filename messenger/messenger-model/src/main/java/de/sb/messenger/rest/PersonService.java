@@ -24,16 +24,6 @@ import static javax.ws.rs.core.Response.Status.*;
 @Path("people")
 @Copyright(year = 2018, holders = "Gruppe Drei (Gruppe 5)")
 public class PersonService implements PersistenceManagerFactoryContainer {
-    /* TODO:
-     * Wird durch einen Service eine Relation modifiziert, dann sind nach Speicherung der
-     * Änderungen (i.e. commit) zudem alle Entitäten aus dem 2nd-Level Cache zu entfernen
-     * deren „mappedBy“-Relationsmengen sich dadurch ändern; diese Spiegel-Mengen werden
-     * weder im 1st-Level Cache noch im 2nd-Level Cache automatisch verwaltet:
-     *
-     * TODO:
-     * 3.3 fehlt. Ist das beabsichtigt?
-     */
-
     private static final String QUERY_STRING = "SELECT p from Person as p WHERE "
             + "(:surname is null or p.name.family = :surname) and "
             + "(:forename is null or p.name.given = :forename) and "
@@ -67,8 +57,8 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             @QueryParam("city") String city,
             @QueryParam("lowerCreationTimestamp") Long lowerCreationTimestamp,
             @QueryParam("upperCreationTimestamp") Long upperCreationTimestamp,
-            @QueryParam("groupAlias") String group) {
-
+            @QueryParam("groupAlias") String group
+    ) {
         final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
 
         TypedQuery<Person> query = entityManager.createQuery(QUERY_STRING, Person.class);
@@ -109,7 +99,6 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             @HeaderParam("Set-Password") String setPassword,
             @NotNull Person personTemplate
     ) {
-        long affectedPersonId = -1;
         final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
         Person requester = entityManager.find(Person.class, requesterIdentity);
         if (requester == null) throw new ClientErrorException(FORBIDDEN);
@@ -117,57 +106,33 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         if (personTemplate.getIdentity() != requesterIdentity && requester.getGroup() != Group.ADMIN)
             throw new ClientErrorException(FORBIDDEN);
 
-        // TODO keine fallunterscheidung!
+        // TODO nochmal rüberschauen
 
-        switch (requester.getGroup()) {
-            // check if requester is Admin
-            case ADMIN:
-                entityManager.getTransaction().begin();
+        Person person = null;
+        if (personTemplate.getIdentity() != 0)
+            person = entityManager.find(Person.class, personTemplate.getIdentity());
 
-                try {
-                    // when the person does not exist create a new one and set the avatar default
-                    if (entityManager.find(Person.class, personTemplate.getIdentity()) == null) {
-                        personTemplate.setAvatar(entityManager.find(Document.class, 1L));
-                        entityManager.persist(personTemplate);
-                    } else { // otherwise this is an update so pls merge
-                        entityManager.merge(personTemplate);
-                    }
+        // new person
+        if (person == null) {
+            if (personTemplate.getGroup() == Group.ADMIN && requester.getGroup() != Group.ADMIN)
+                throw new ClientErrorException(FORBIDDEN);
 
-                    entityManager.getTransaction().commit();
-                    affectedPersonId = personTemplate.getIdentity();
-                } catch (final RollbackException exception) {
-                    entityManager.getTransaction().rollback();
-                    throw new ClientErrorException(CONFLICT);
-                } finally {
-                    entityManager.getTransaction().begin();
-                }
-                break;
-            // you are a user
-            case USER:
-                if (requesterIdentity != personTemplate.getIdentity()) throw new ClientErrorException(UNAUTHORIZED);
+            person = personTemplate;
 
-                // set group always to user if requester is a user on his own
-                personTemplate.setGroup(USER);
-                entityManager.getTransaction().begin();
-
-                // merge the user with his new data
-                try {
-                    entityManager.merge(personTemplate);
-                    entityManager.getTransaction().commit();
-                    affectedPersonId = personTemplate.getIdentity();
-                } catch (final RollbackException exception) {
-                    entityManager.getTransaction().rollback();
-                    throw new ClientErrorException(CONFLICT);
-                } finally {
-                    entityManager.getTransaction().begin();
-                }
-
-                break;
+            entityManager.persist(person);
+        } else {
+            // if a user tries to make this user an admin
+            if (person.getGroup() == Group.USER && personTemplate.getGroup() == Group.ADMIN && requester.getGroup() == Group.USER) {
+                throw new ClientErrorException(FORBIDDEN);
+            }
+            person = personTemplate;
+            entityManager.flush();
         }
 
-        return affectedPersonId;
-    }
+        commitBegin(entityManager);
 
+        return person.getIdentity();
+    }
 
     /**
      * GET /people/{id}
