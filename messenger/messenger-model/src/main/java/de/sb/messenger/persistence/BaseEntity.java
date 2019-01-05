@@ -10,8 +10,8 @@ import javax.persistence.*;
 import javax.validation.constraints.*;
 import javax.xml.bind.annotation.*;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Table(name = "BaseEntity", schema = "messenger")
 @Entity
@@ -21,6 +21,14 @@ import java.util.Set;
 @XmlSeeAlso(value = {Person.class, Document.class, Message.class})
 @JsonbVisibility(JsonProtectedPropertyStrategy.class)
 public class BaseEntity implements Comparable<BaseEntity> {
+
+    public static <T> List<T> sortSet(Set<T> set) {
+        return set.stream().sorted().collect(Collectors.toList());
+    }
+
+    public static <T> List<T> sortSet(Set<T> set, Comparator<T> comp) {
+        return set.stream().sorted(comp).collect(Collectors.toList());
+    }
 
     /** needs to be insertable otherwise:
         Exception [EclipseLink-46] (Eclipse Persistence Services - 2.6.0.v20150309-bf26070): org.eclipse.persistence.exceptions.DescriptorException
@@ -64,7 +72,7 @@ public class BaseEntity implements Comparable<BaseEntity> {
     private long creationTimestamp;
 
     @OneToMany(mappedBy = "subject", cascade = {CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REMOVE})
-    private Set<Message> messagesCaused;
+    private Set<Message> messagesCaused; // TODO: Is this right?
 
     protected BaseEntity() {
         this(0, 0, 0, new HashSet<>());
@@ -111,8 +119,8 @@ public class BaseEntity implements Comparable<BaseEntity> {
 
     @JsonbTransient
     @XmlTransient
-    public Set<Message> getMessagesCaused() {
-        return messagesCaused;
+    public Collection<Message> getMessagesCaused() {
+        return sortSet(messagesCaused);
     }
 
     protected void setMessagesCaused(Set<Message> messagesCaused) {

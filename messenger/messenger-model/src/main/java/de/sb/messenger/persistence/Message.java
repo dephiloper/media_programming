@@ -59,8 +59,6 @@ public class Message extends BaseEntity {
 		this.author = author;
 	}
 
-	// TODO S.14-29: Definiert dazu folgende zusätzliche Methoden, mit ?aufsteigender Reihenfolge bei Mengenergebnissen?
-    // Collections sollen sortiert werden, bevor sie returned werden.
 	@JsonbProperty
 	@XmlTransient
 	public long getAuthorReference() {

@@ -41,7 +41,11 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             + "(:street is null or p.address.street = :street) and "
             + "(:city is null or p.address.city = :city) and "
             + "(:postcode is null or p.address.postcode = :postcode) and "
-            + "(:group is null or p.group = :group)";
+            + "(:group is null or p.group = :group)"
+            + "(:lowerCreationTimestamp is null or m.creationTimestamp >= :lowerCreationTimestamp)"
+            + "(:upperCreationTimestamp is null or m.creationTimestamp <= :lowerCreationTimestamp)";
+
+    private static final String UPDATE_AVATAR_QUERY_STRING = "SELECT doc from Document WHERE contentHash = :contentHash";
 
     /**
      * Returns the people matching the given filter criteria, with missing
@@ -49,7 +53,6 @@ public class PersonService implements PersistenceManagerFactoryContainer {
      * Search criteria should be any normal property of person and it composites, except
      * identity and password, plus resultOffset and resultLimit which define a result range.
      */
-    // TODO creationTImestamp upper lower
     @GET
     @Produces({APPLICATION_JSON, APPLICATION_XML})
     public Collection<Person> queryPeople(
@@ -62,6 +65,8 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             @QueryParam("street") String street,
             @QueryParam("postcode") String postCode,
             @QueryParam("city") String city,
+            @QueryParam("lowerCreationTimestamp") Long lowerCreationTimestamp,
+            @QueryParam("upperCreationTimestamp") Long upperCreationTimestamp,
             @QueryParam("groupAlias") String group) {
 
         final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
@@ -77,6 +82,8 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         query.setParameter("postcode", postCode);
         query.setParameter("city", city);
         query.setParameter("group", group);
+        query.setParameter("lowerCreationTimestamp", lowerCreationTimestamp);
+        query.setParameter("upperCreationTimestamp", upperCreationTimestamp);
 
         List<Person> people = query.getResultList();
         people.sort(PERSON_COMPARATOR);
@@ -250,9 +257,9 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         if (personIdentity != requesterIdentity && requester.getGroup() != Group.ADMIN) throw new ClientErrorException(FORBIDDEN);
 
         // if a Document is found, the request body contains the exact picture which can be found in the database
-        // TODO Parameter
-        byte[] contentHash = HashTools.sha256HashCode(content);
-        List<Document> docs = entityManager.createQuery("SELECT doc from Document doc WHERE contentHash =" + contentHash, Document.class).getResultList();
+        TypedQuery<Document> query = entityManager.createQuery(UPDATE_AVATAR_QUERY_STRING, Document.class);
+        query.setParameter("contentHash", HashTools.sha256HashCode(content));
+        List<Document> docs = query.getResultList();
 
         Document doc;
 

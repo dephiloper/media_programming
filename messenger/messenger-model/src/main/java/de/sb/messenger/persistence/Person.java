@@ -1,9 +1,6 @@
 package de.sb.messenger.persistence;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.json.bind.annotation.JsonbProperty;
 import javax.json.bind.annotation.JsonbTransient;
@@ -46,7 +43,6 @@ import de.sb.toolbox.bind.JsonProtectedPropertyStrategy;
 @XmlRootElement
 @XmlType
 public class Person extends BaseEntity {
-
     private static final byte[] DEFAULT_HASH = HashTools.sha256HashCode("default");
 
     public static final Comparator<Person> PERSON_COMPARATOR = Comparator.comparing(Person::getName).thenComparing(Person::getEmail);
@@ -98,7 +94,7 @@ public class Person extends BaseEntity {
 
     @NotNull
     @ManyToOne(optional = false)
-    @JoinColumn(name = "avatarReference", referencedColumnName = "documentIdentity", nullable = false, updatable = true) // TODO add to all join collouns
+    @JoinColumn(name = "avatarReference", referencedColumnName = "documentIdentity", nullable = false, updatable = true)
     private Document avatar;
 
     // constructors
@@ -151,8 +147,8 @@ public class Person extends BaseEntity {
     @JsonbTransient
     @XmlElement
     @XmlIDREF
-    public Set<Person> getPeopleObserving() {
-        return this.peopleObserving;
+    public Collection<Person> getPeopleObserving() {
+        return sortSet(peopleObserving, PERSON_COMPARATOR);
     }
 
     protected void setPeopleObserving(Set<Person> peopleObserving) {
@@ -169,8 +165,8 @@ public class Person extends BaseEntity {
     @JsonbTransient
     @XmlElement
     @XmlIDREF
-    public Set<Person> getPeopleObserved() {
-        return this.peopleObserved;
+    public Collection<Person> getPeopleObserved() {
+        return sortSet(peopleObserved, PERSON_COMPARATOR);
     }
 
     protected void setPeopleObserved(Set<Person> peopleObserved) {
@@ -196,14 +192,13 @@ public class Person extends BaseEntity {
     @JsonbTransient
     @XmlElement
     @XmlIDREF
-    public Set<Message> getMessagesAuthored() {
-        return this.messagesAuthored;
+    public Collection<Message> getMessagesAuthored() {
+        return sortSet(messagesAuthored);
     }
 
     protected void setMessagesAuthored(Set<Message> messagesAuthored) {
         this.messagesAuthored = messagesAuthored;
     }
-
 
     @JsonbProperty
     @XmlTransient
