@@ -14,7 +14,7 @@
 	 */
 	const WelcomeController = function () {
 		Controller.call(this);
-	}
+	};
 	WelcomeController.prototype = Object.create(Controller.prototype);
 	WelcomeController.prototype.constructor = WelcomeController;
 

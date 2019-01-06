@@ -1,0 +1,198 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="author" content="Sascha Baumeister" />
+		<meta name="dcterms.rightsHolder" content="Sascha Baumeister" />
+		<meta name="dcterms.rights" content="all rights reserved" />
+		<meta name="dcterms.dateCopyrighted" content="2013" />
+
+		<title>AJAX Messenger System</title>
+		<link rel="stylesheet" type="text/css" href="messenger.css" />
+		<link rel="icon" type="image/png" href="messenger.png"/>
+
+		<script src="js/util-cache.js" ></script>
+		<script src="js/controller.js"></script>
+		<script src="js/welcome-controller.js"></script>
+		<script src="js/messages-controller.js"></script>
+		<script  src="js/people-controller.js"></script>
+		<script src="js/preferences-controller.js"></script>
+
+		<template id="login-template">
+			<section class="login">
+				<fieldset>
+					<legend><output class="nls" name="legendLogin"></output></legend>
+					<div>
+						<label class="horizontal"><output class="nls" name="labelEmail"></output></label>
+						<input type="email" required="required" maxlength="128" />
+					</div>
+					<div>
+						<label class="horizontal"><output class="nls" name="labelPassword"></output></label>
+						<input type="password" required="required" maxlength="16" />
+					</div>
+				</fieldset>
+				<button type="button"><output class="nls" name="labelSend"></output></button>
+			</section>
+		</template>
+
+
+		<template id="preferences-template">
+			<section class="preferences">
+				<fieldset>
+					<legend><output class="nls" name="legendAvatar"></output></legend>
+					<div>
+						<label class="horizontal"><output class="nls" name="labelAvatar"></output></label>
+						<img />
+					</div>
+				</fieldset>
+				<fieldset>
+					<legend><output class="nls" name="legendAccount"></output></legend>
+					<div>
+						<label class="horizontal"><output class="nls" name="labelGroup"></output></label>
+						<input type="text" readonly="readonly" />
+					</div>
+					<div>
+						<label class="horizontal"><output class="nls" name="labelEmail"></output></label>
+						<input type="email" readonly="readonly" />
+					</div>
+					<div>
+						<label class="horizontal"><output class="nls" name="labelPassword"></output></label>
+						<input type="password" maxlength="16" />
+					</div>
+					<div>
+						<label class="horizontal"><output class="nls" name="labelForename"></output></label>
+						<input type="text" required="required" maxlength="31" />
+					</div>
+					<div>
+						<label class="horizontal"><output class="nls" name="labelSurname"></output></label>
+						<input type="text" required="required" maxlength="31" />
+					</div>
+				</fieldset>
+				<fieldset>
+					<legend><output class="nls" name="legendAdress"></output></legend>
+					<div>
+						<label class="horizontal"><output class="nls" name="labelStreet"></output></label>
+						<input type="text" required="required" maxlength="63" />
+					</div>
+					<div>
+						<label class="horizontal"><output class="nls" name="labelPostcode"></output></label>
+						<input type="number" required="required" pattern="^[0-9]{5}$" />
+					</div>
+					<div>
+						<label class="horizontal"><output class="nls" name="labelCity"></output></label>
+						<input class="width160" type="text" required="required" maxlength="63" />
+					</div>
+				</fieldset>
+				<button type="button"><output class="nls" name="labelSend"></output></button>
+			</section>
+		</template>
+
+
+		<template id="people-observing-template">
+			<section class="people-observing">
+				<h1><output class="nls" name="headerObserving"></output></h1>
+				<div class="slider"></div>
+			</section>
+		</template>
+
+		<template id="people-observed-template">
+			<section class="people-observed">
+				<h1><output class="nls" name="headerObserved"></output></h1>
+				<div class="slider"></div>
+			</section>
+		</template>
+
+		<template id="candidates-template">
+			<section class="candidates">
+				<h1><output class="nls" name="headerQueryPeople"></output></h1>
+				<fieldset>
+					<legend><output class="nls" name="legendQueryPeople"></output></legend>
+					<div>
+						<label class="horizontal"><output class="nls" name="labelEmail"></output></label>
+						<input type="text" maxlength="128" />
+					</div>
+					<div>
+						<label class="horizontal"><output class="nls" name="labelForename"></output></label>
+						<input type="text" maxlength="31" />
+					</div>
+					<div>
+						<label class="horizontal"><output class="nls" name="labelSurname"></output></label>
+						<input type="text" maxlength="31" />
+					</div>
+					<div>
+						<label class="horizontal"><output class="nls" name="labelStreet"></output></label>
+						<input type="tel" maxlength="63" />
+					</div>
+					<div>
+						<label class="horizontal"><output class="nls" name="labelCity"></output></label>
+						<input type="text" maxlength="63" />
+					</div>
+					<div>
+						<label class="horizontal"></label>
+						<button type="button"><output class="nls" name="labelSend"></output></button>
+					</div>
+				</fieldset>
+				<div class="slider"></div>
+			</section>
+		</template>
+
+
+		<template id="subjects-template">
+			<section class="subjects">
+				<h1><output class="nls" name="headerSubjects"></output></h1>
+				<div class="slider"></div>
+			</section>
+		</template>
+
+		<template id="messages-template">
+			<section class="messages">
+				<h1><output class="nls" name="headerMessages"></output></h1>
+				<ul></ul>
+			</section>
+		</template>
+
+		<template id="message-output-template">
+			<li class="message">
+				<div>
+					<a><span></span></a>
+					<a><img /></a>
+					<output></output>
+				</div>
+				<div>
+					<output></output>
+				</div>
+				<ul></ul>
+			</li>
+		</template>
+
+		<template id="message-input-template">
+			<li class="message">
+				<div>
+					<span></span>
+					<a><img /></a>
+					<output></output>
+				</div>
+				<textarea rows="6" wrap="hard" maxlength="4093"></textarea>
+				<button type="button"><output class="nls" name="labelSend"></output></button>
+			</li>
+		</template>
+	</head>
+
+
+	<body>
+		<header>
+			<nav class="horizontal">
+				<ul>
+					<li><a><output class="nls" name="menuLogin"></output></a></li>
+					<li><a><output class="nls" name="menuMessages"></output></a></li>
+					<li><a><output class="nls" name="menuPeople"></output></a></li>
+					<li><a><output class="nls" name="menuPreferences"></output></a></li>
+				</ul>
+			</nav>
+		</header>
+		<main></main>
+		<footer>
+			<output></output>
+		</footer>
+	</body>
+</html>

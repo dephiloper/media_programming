@@ -31,11 +31,12 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             + "(:street is null or p.address.street = :street) and "
             + "(:city is null or p.address.city = :city) and "
             + "(:postcode is null or p.address.postcode = :postcode) and "
-            + "(:group is null or p.group = :group)"
-            + "(:lowerCreationTimestamp is null or m.creationTimestamp >= :lowerCreationTimestamp)"
-            + "(:upperCreationTimestamp is null or m.creationTimestamp <= :lowerCreationTimestamp)";
+            + "(:group is null or p.group = :group) and"
+            + "(:lowerCreationTimestamp is null or p.creationTimestamp >= :lowerCreationTimestamp) and"
+            + "(:upperCreationTimestamp is null or p.creationTimestamp <= :lowerCreationTimestamp)";
 
-    private static final String UPDATE_AVATAR_QUERY_STRING = "SELECT doc from Document WHERE contentHash = :contentHash";
+    private static final String UPDATE_AVATAR_QUERY_STRING = "SELECT doc from Document as doc WHERE "
+            + "doc.contentHash = :contentHash";
 
     /**
      * Returns the people matching the given filter criteria, with missing
@@ -46,7 +47,6 @@ public class PersonService implements PersistenceManagerFactoryContainer {
     @GET
     @Produces({APPLICATION_JSON, APPLICATION_XML})
     public Collection<Person> queryPeople(
-            // Default Values?
             @QueryParam("resultOffset") int resultOffset,
             @QueryParam("resultLimit") int resultLimit,
             @QueryParam("surname") String familyName,
@@ -57,7 +57,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             @QueryParam("city") String city,
             @QueryParam("lowerCreationTimestamp") Long lowerCreationTimestamp,
             @QueryParam("upperCreationTimestamp") Long upperCreationTimestamp,
-            @QueryParam("groupAlias") String group
+            @QueryParam("groupAlias") Group group
     ) {
         final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
 

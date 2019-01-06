@@ -23,8 +23,8 @@ public class MessageService implements PersistenceManagerFactoryContainer {
 
     private static final String QUERY_STRING = "SELECT m from Message as m WHERE "
             + "(:fragment is null or m.body like :fragment) and "
-            + "(:lowerCreationTimestamp is null or m.creationTimestamp >= :lowerCreationTimestamp)"
-            + "(:upperCreationTimestamp is null or m.creationTimestamp <= :lowerCreationTimestamp)";
+            + "(:lowerCreationTimestamp is null or m.creationTimestamp >= :lowerCreationTimestamp) and"
+            + "(:upperCreationTimestamp is null or m.creationTimestamp <= :upperCreationTimestamp)";
 
     /**
      * Returns the messages matching the given criteria, with missing
