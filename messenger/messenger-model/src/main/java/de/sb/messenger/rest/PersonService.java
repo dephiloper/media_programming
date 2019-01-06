@@ -118,6 +118,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
                 throw new ClientErrorException(FORBIDDEN);
 
             person = personTemplate;
+            person.generateCreationTimestampFromSystemTime(); // TODO: Soll das hier passieren oder über personTemplate gesetzt werden?
 
             entityManager.persist(person);
         } else {
