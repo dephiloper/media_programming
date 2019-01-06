@@ -300,8 +300,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         Person person = entityManager.find(Person.class, personIdentity);
         if (person == null) throw new ClientErrorException(NOT_FOUND);
 
-        Collection<Person> peopleObserved = person.getPeopleObserved();
-        peopleObserved.clear();
+        HashSet<Person> peopleObserved = new HashSet<>();
 
         for (long personObservedId : peopleObservedIdentities) {
             Person observedPerson = entityManager.find(Person.class, personObservedId);
@@ -309,10 +308,9 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             peopleObserved.add(observedPerson);
         }
 
-        System.out.println("Person IDs:");
-        for (long personObservedId : peopleObservedIdentities) {
-            System.out.println(personObservedId);
-        }
+        person.setPeopleObserved(peopleObserved);
+
+        entityManager.flush();
 
         commitBegin(entityManager);
     }

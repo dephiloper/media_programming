@@ -169,7 +169,7 @@ public class Person extends BaseEntity {
         return sortSet(peopleObserved, PERSON_COMPARATOR);
     }
 
-    protected void setPeopleObserved(Set<Person> peopleObserved) {
+    public void setPeopleObserved(Set<Person> peopleObserved) {
         this.peopleObserved = peopleObserved;
     }
 
