@@ -34,7 +34,7 @@ public class MessageService implements PersistenceManagerFactoryContainer {
      */
     @GET
     @Produces({APPLICATION_JSON, APPLICATION_XML})
-    public Collection<Message> queryMessages(
+    public Collection<Message> queryMessages (
             @QueryParam("fragment") String fragment,
             @QueryParam("lowerCreationTimestamp") Long lowerCreationTimestamp,
             @QueryParam("upperCreationTimestamp") Long upperCreationTimestamp,
@@ -62,7 +62,7 @@ public class MessageService implements PersistenceManagerFactoryContainer {
     @GET
     @Path("{id}")
     @Produces({APPLICATION_JSON, APPLICATION_XML})
-    public Message queryPerson(@PathParam("id") @Positive final long messageIdentity) {
+    public Message queryMessage(@PathParam("id") @Positive final long messageIdentity) {
         final EntityManager entityManager = entityManagerFactory.createEntityManager();
         Message message = entityManager.find(Message.class, messageIdentity);
 
@@ -95,6 +95,7 @@ public class MessageService implements PersistenceManagerFactoryContainer {
 
         final Message message = new Message(requester, subject);
         message.setBody(body);
+        message.generateCreationTimestampFromSystemTime();
         entityManager.persist(message);
 
         try {

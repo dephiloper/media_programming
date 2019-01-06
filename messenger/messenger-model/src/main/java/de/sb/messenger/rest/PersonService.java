@@ -115,6 +115,8 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         // new person
         if (person == null) {
             person = personTemplate;
+            person.generateCreationTimestampFromSystemTime(); // TODO: Soll das hier passieren oder über personTemplate gesetzt werden?
+
             entityManager.persist(person);
             Document doc = entityManager.find(Document.class, 1L); // default avatar
             person.setAvatar(doc);
