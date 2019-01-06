@@ -20,21 +20,21 @@ public class Document extends BaseEntity {
     private static final byte[] EMPTY_CONTENT = new byte[0];
     private static final byte[] EMPTY_CONTENT_HASH = HashTools.sha256HashCode(EMPTY_CONTENT);
 
-    //@Size(min = 32, max = 32)
+    @Size(min = 32, max = 32)
     @NotNull
-    //@NotEmpty
+    @NotEmpty
     @Column(nullable = false, updatable = true)
     private byte[] contentHash;
 
-    //@Size(min = 1)
-    @NotNull
-    //@NotEmpty
+    @Size(min = 1)
+    @NotNull(message = "little fucker")
+    @NotEmpty
     @Column(nullable = false, updatable = true)
     private byte[] content;
 
-    //@Size(min = 1, max = 63)
+    @Size(min = 1, max = 63)
     @NotNull
-    //@NotEmpty
+    @NotEmpty
     @Column(nullable = false, updatable = true)
     private String contentType;
 
