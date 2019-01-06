@@ -62,7 +62,7 @@ public class BaseEntity implements Comparable<BaseEntity> {
     private long identity;
 
     @NotNull
-    @Positive
+    @PositiveOrZero
     @Column(nullable = false, updatable = false, insertable = true)
     private int version;
 
