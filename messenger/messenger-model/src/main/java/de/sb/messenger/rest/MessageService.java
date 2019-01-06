@@ -95,6 +95,7 @@ public class MessageService implements PersistenceManagerFactoryContainer {
 
         final Message message = new Message(requester, subject);
         message.setBody(body);
+        message.generateCreationTimestampFromSystemTime();
         entityManager.persist(message);
 
         try {

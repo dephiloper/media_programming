@@ -97,6 +97,10 @@ public class BaseEntity implements Comparable<BaseEntity> {
         this.identity = identity;
     }
 
+    public void generateCreationTimestampFromSystemTime() {
+        this.creationTimestamp = System.currentTimeMillis();
+    }
+
     @JsonbProperty
     @XmlAttribute
     public int getVersion() {
