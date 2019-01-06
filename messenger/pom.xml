@@ -24,6 +24,7 @@
     <modules>
         <module>messenger-model</module>
         <module>messenger-test</module>
+        <module>messenger-web</module>
     </modules>
 
     <dependencies>
