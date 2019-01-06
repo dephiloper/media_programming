@@ -34,12 +34,12 @@ public class MessageService implements PersistenceManagerFactoryContainer {
      */
     @GET
     @Produces({APPLICATION_JSON, APPLICATION_XML})
-    public Collection<Message> queryMessages(
+    public Collection<Message> queryMessages (
             @QueryParam("fragment") String fragment,
             @QueryParam("lowerCreationTimestamp") Long lowerCreationTimestamp,
             @QueryParam("upperCreationTimestamp") Long upperCreationTimestamp,
-            @QueryParam("resultOffset") Integer resultOffset,
-            @QueryParam("resultLimit") Integer resultLimit
+            @QueryParam("resultOffset") int resultOffset,
+            @QueryParam("resultLimit") int resultLimit
     ) {
     	final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
         TypedQuery<Message> query = entityManager.createQuery(QUERY_STRING, Message.class);
@@ -62,7 +62,7 @@ public class MessageService implements PersistenceManagerFactoryContainer {
     @GET
     @Path("{id}")
     @Produces({APPLICATION_JSON, APPLICATION_XML})
-    public Message queryPerson(@PathParam("id") @Positive final long messageIdentity) {
+    public Message queryMessage(@PathParam("id") @Positive final long messageIdentity) {
         final EntityManager entityManager = entityManagerFactory.createEntityManager();
         Message message = entityManager.find(Message.class, messageIdentity);
 

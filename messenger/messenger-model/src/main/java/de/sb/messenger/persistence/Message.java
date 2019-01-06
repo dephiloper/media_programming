@@ -18,7 +18,7 @@ import javax.xml.bind.annotation.*;
 public class Message extends BaseEntity {
 
 	@Column(nullable = true, updatable = true)
-	@Size(min = 1, max = 2^13-3)
+	@Size(min = 1, max = 8189)
 	@NotEmpty
 	private String body;
 	
