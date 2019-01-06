@@ -38,8 +38,8 @@ public class MessageService implements PersistenceManagerFactoryContainer {
             @QueryParam("fragment") String fragment,
             @QueryParam("lowerCreationTimestamp") Long lowerCreationTimestamp,
             @QueryParam("upperCreationTimestamp") Long upperCreationTimestamp,
-            @QueryParam("resultOffset") Integer resultOffset,
-            @QueryParam("resultLimit") Integer resultLimit
+            @QueryParam("resultOffset") int resultOffset,
+            @QueryParam("resultLimit") int resultLimit
     ) {
     	final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
         TypedQuery<Message> query = entityManager.createQuery(QUERY_STRING, Message.class);

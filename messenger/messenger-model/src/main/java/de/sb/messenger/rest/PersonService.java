@@ -4,7 +4,9 @@ import de.sb.messenger.persistence.*;
 import de.sb.toolbox.Copyright;
 import de.sb.toolbox.net.RestJpaLifecycleProvider;
 
-import javax.persistence.*;
+import javax.persistence.EntityManager;
+import javax.persistence.RollbackException;
+import javax.persistence.TypedQuery;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
@@ -15,7 +17,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
-import static de.sb.messenger.persistence.Group.USER;
 import static de.sb.messenger.persistence.Person.PERSON_COMPARATOR;
 import static de.sb.messenger.rest.BasicAuthenticationFilter.REQUESTER_IDENTITY;
 import static javax.ws.rs.core.MediaType.*;
@@ -101,10 +102,9 @@ public class PersonService implements PersistenceManagerFactoryContainer {
     ) {
         final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
         Person requester = entityManager.find(Person.class, requesterIdentity);
-        if (requester == null) throw new ClientErrorException(FORBIDDEN);
 
-        if (personTemplate.getIdentity() != requesterIdentity && requester.getGroup() != Group.ADMIN)
-            throw new ClientErrorException(FORBIDDEN);
+        if (requester == null) throw new ClientErrorException(FORBIDDEN);
+        if (personTemplate.getIdentity() != requesterIdentity && requester.getGroup() != Group.ADMIN) throw new ClientErrorException(FORBIDDEN);
 
         // TODO nochmal rüberschauen
 
@@ -114,21 +114,15 @@ public class PersonService implements PersistenceManagerFactoryContainer {
 
         // new person
         if (person == null) {
-            if (personTemplate.getGroup() == Group.ADMIN && requester.getGroup() != Group.ADMIN)
-                throw new ClientErrorException(FORBIDDEN);
-
             person = personTemplate;
-
             entityManager.persist(person);
-        } else {
-            // if a user tries to make this user an admin
-            if (person.getGroup() == Group.USER && personTemplate.getGroup() == Group.ADMIN && requester.getGroup() == Group.USER) {
-                throw new ClientErrorException(FORBIDDEN);
-            }
-            person = personTemplate;
-            entityManager.flush();
+            Document doc = entityManager.find(Document.class, 1L); // default avatar
+            person.setAvatar(doc);
+        } else { // update person
+            person.update(personTemplate);
         }
 
+        entityManager.flush();
         commitBegin(entityManager);
 
         return person.getIdentity();
@@ -305,6 +299,8 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         Person requester = entityManager.find(Person.class, requesterIdentity);
         Person person = new Person(new Document() {
         });
+
+        person.getPeopleObserved().clear();
 
         if (requesterIdentity == entityIdentity || requester.getGroup() == Group.ADMIN)
             person = entityManager.find(Person.class, entityIdentity);
