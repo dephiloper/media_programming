@@ -12,10 +12,7 @@ import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 import static de.sb.messenger.persistence.Person.PERSON_COMPARATOR;
 import static de.sb.messenger.rest.BasicAuthenticationFilter.REQUESTER_IDENTITY;
@@ -283,34 +280,40 @@ public class PersonService implements PersistenceManagerFactoryContainer {
 
     /**
      * PUT /people/{id}/peopleObserved
-     * Updates the given person to monitor the
-     * people matching the form-supplied collection of person identities in application/x-wwwform-urlencoded
-     * format, meaning as multiple form-entries sharing the same name.
-     * Make sure the Header field Requester-Identity matches the given person identity
-     * this header field will later be supplied during authentication.
+     * Updates the given person to monitor the people, matching the form-supplied collection of person identities in
+     * application/x-wwwform-urlencoded format, meaning as multiple form-entries sharing the same name.
+     * Make sure the Header field Requester-Identity matches the given person identity.
+     * This header field will later be supplied during authentication.
      */
     @PUT
     @Path("{id}/peopleObserved")
-    @Produces({APPLICATION_JSON, APPLICATION_XML})
-    public Collection<Person> updatePeopleObserved(
+    @Consumes(APPLICATION_FORM_URLENCODED)
+    public void updatePeopleObserved(
+            @PathParam("id") @Positive final long personIdentity,
             @HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
-            @PathParam("id") @Positive final long entityIdentity
+            @FormParam("peopleObserved") final List<Long> peopleObservedIdentities
     ) {
+        if (requesterIdentity != personIdentity) throw new ClientErrorException(BAD_REQUEST);
+
         final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
-        Person requester = entityManager.find(Person.class, requesterIdentity);
-        Person person = new Person(new Document() {
-        });
 
-        person.getPeopleObserved().clear();
+        Person person = entityManager.find(Person.class, personIdentity);
+        if (person == null) throw new ClientErrorException(NOT_FOUND);
 
-        if (requesterIdentity == entityIdentity || requester.getGroup() == Group.ADMIN)
-            person = entityManager.find(Person.class, entityIdentity);
+        Collection<Person> peopleObserved = person.getPeopleObserved();
+        peopleObserved.clear();
 
-        if (person == null)
-            throw new ClientErrorException(NOT_FOUND);
+        for (long personObservedId : peopleObservedIdentities) {
+            Person observedPerson = entityManager.find(Person.class, personObservedId);
+            if (observedPerson == null) throw new ClientErrorException(NOT_FOUND);
+            peopleObserved.add(observedPerson);
+        }
 
-        final List<Person> people = new ArrayList<>(person.getPeopleObserved());
-        people.sort(PERSON_COMPARATOR);
-        return people;
+        System.out.println("Person IDs:");
+        for (long personObservedId : peopleObservedIdentities) {
+            System.out.println(personObservedId);
+        }
+
+        commitBegin(entityManager);
     }
 }
