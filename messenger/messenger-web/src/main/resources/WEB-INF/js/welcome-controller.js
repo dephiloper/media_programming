@@ -49,6 +49,7 @@
 			this.displayError();
 
 			try {
+				console.log("login");
 				const inputElements = document.querySelectorAll("section.login input");
 				const email = inputElements[0].value.trim();
 				const password = inputElements[1].value.trim();
