@@ -113,9 +113,9 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         if (person == null) {
             person = personTemplate;
             person.generateCreationTimestampFromSystemTime();
-            entityManager.persist(person);
             Document doc = entityManager.find(Document.class, 1L); // default avatar
             person.setAvatar(doc);
+            entityManager.persist(person);
         } else { // update person
             person.update(personTemplate);
         }

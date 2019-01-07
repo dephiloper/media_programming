@@ -49,19 +49,19 @@ public class Person extends BaseEntity {
 
     // attributes
 
-    //@Size(min = 1, max = 128)
-    //@NotEmpty
+    @Size(min = 1, max = 128)
+    @NotEmpty
     @Column(nullable = true, updatable = true)
-    //@Email
+    @Email
     private String email;
 
-    //@Size(min = 32, max = 32)
-    //@NotNull
-    //@NotEmpty
+    @Size(min = 32, max = 32)
+    @NotNull
+    @NotEmpty
     @Column(nullable = false, updatable = true)
     private byte[] passwordHash;
 
-    //@NotNull
+    @NotNull
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             schema = "messenger",
@@ -73,26 +73,25 @@ public class Person extends BaseEntity {
     private Set<Person> peopleObserved;
 
     @Embedded
-    //@Valid
+    @Valid
     private Name name;
 
     @Embedded
-    //@Valid
+    @Valid
     private Address address;
 
     @Column(name = "groupAlias", nullable = false, updatable = true)
     @Enumerated(EnumType.STRING)
     private Group group;
 
-    //@NotNull
+    @NotNull
     @ManyToMany(mappedBy = "peopleObserved", cascade = {CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REMOVE})
     private Set<Person> peopleObserving;
 
     @OneToMany(mappedBy = "author", cascade = {CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REMOVE})
     private Set<Message> messagesAuthored;
 
-
-    //@NotNull
+    @NotNull
     @ManyToOne(optional = false)
     @JoinColumn(name = "avatarReference", referencedColumnName = "documentIdentity", nullable = false, updatable = true)
     private Document avatar;
