@@ -12,4 +12,11 @@
     <artifactId>messenger-test</artifactId>
 
 
+    <dependencies>
+        <dependency>
+            <groupId>de.media-programming</groupId>
+            <artifactId>messenger-model</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
 </project>
