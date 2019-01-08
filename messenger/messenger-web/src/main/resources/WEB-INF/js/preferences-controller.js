@@ -116,7 +116,7 @@
 
 				// fetch() supports only sending credentials from a browser's hidden Basic-Auth credentials store, not
 				// storing them. This workaround uses one classic XMLHttpRequest invocation to circumvent this problem.
-				Controller.sessionOwner = JSON.parse(await Controller.xhr("/services/people/requester", "GET", {"Accept": "application/json"}, "", "text", email, password));
+				Controller.sessionOwner = JSON.parse(await this.xhr("/services/people/"+Controller.sessionOwner.identity, "GET", {"Accept": "application/json"}, "", "text", email, password));
 				this.displaySessionOwner();
 			} catch (error) {
 				if (error instanceof Error && error.message.startsWith("HTTP 409")) {
@@ -141,13 +141,22 @@
 		value: async function (avatarFile) {
 			const imageElement = document.querySelector("section.preferences img");
 			this.displayError();
-
 			// TODO: call PUT /services/people/{id}/avatar" to store the given avatar file, using
 			// either fetch() or Controller.xhr(). Throw an exception if the call fails. If it
 			// succeeds, increment the version of Controller.sessionOwner by 1. In case of an error,
 			// call this.displayError(error). In any case, alter the src-property of the imageElement
 			// to "/services/people/{id}/avatar?cache-bust=" + Date.now() in order to bypass the
 			// browser's image cache and display the modified image.
+
+			if (avatarFile.type !== 'image/jpeg' && avatarFile.type !== 'image/jpeg') throw new Error("HTTP 418 I'm a teapot");
+
+			try {
+				await this.xhr("/services/people/" + Controller.sessionOwner.identity + "/avatar", "PUT", {"Content-Type": avatarFile.type}, avatarFile, "text");
+				Controller.sessionOwner.version += 1;
+				imageElement.src = "/services/people/" + Controller.sessionOwner.identity + "/avatar?cache-bust=" + Date.now();
+			} catch (error) {
+				this.displayError(error);
+			}
 		}
 	});
 
