@@ -131,23 +131,12 @@ function createResourceWithQueryParameters(resource, queryParameters) {
 				}
 			}
 
-			// let content = "peopleObserved=2&peopleObserved=4"
-			// let content = ["peopleObserved=2", "peopleObserved=4"]
-			let resource = "services/people/" + Controller.sessionOwner.identity + "/peopleObserved"
+			let content = "peopleObserved=2&peopleObserved=6"
+			// TODO: make content right
 
-			console.log("resource: ", resource)
+			let resource = "/services/people/" + Controller.sessionOwner.identity + "/peopleObserved"
 
-			let content = new URLSearchParams()
-			content.append("peopleObserved", 2)
-			content.append("peopleObserved", 4)
-
-			// fetch(resource, {method: "PUT", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: content})
-
-			await this.xhr(resource,
-						   "PUT",
-						   {"Content-Type": "application/x-www-form-urlencoded"},
-						   content,
-						   "text")
+			fetch(resource, {method: "PUT", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: content})
 		}
 	});
 
