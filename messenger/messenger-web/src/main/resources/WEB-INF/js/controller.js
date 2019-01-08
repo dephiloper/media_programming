@@ -21,7 +21,7 @@ this.de_sb_messenger = this.de_sb_messenger || {};
 		configurable: false,
 		writable: true,
 		value: function () {
-			throw new Error("this operation must be overriden!");
+			throw new Error("this operation must be overridden!");
 		}
 	});
 
