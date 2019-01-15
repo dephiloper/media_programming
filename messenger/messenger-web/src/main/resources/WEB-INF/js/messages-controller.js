@@ -61,7 +61,9 @@
                 const imageElement = messageOutputElement.querySelector("img");
                 imageElement.src = "/services/people/" + message.authorReference + "/avatar";
                 //messageOutputElement.querySelector("output.message-meta").innerText;
+
                 messageOutputElement.querySelector("output.message-body").innerText = message.body;
+                messageOutputElement.querySelector(".message-plus").addEventListener("click", event => this.toggleChildMessages());
             }
 
             //const messageOutputElement = document.querySelector("#message-output-template").content.cloneNode(true).firstElementChild;
