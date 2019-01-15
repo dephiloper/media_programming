@@ -55,13 +55,13 @@
             const messageList = document.querySelector(".messages ul");
             const messages = JSON.parse(await this.xhr("/services/messages/", "GET", {"Accept": "application/json"}, "", "text"));
 
-            for (let message in messages) {
-                const messageElement = document.querySelector("#message-output-template").content.cloneNode(true).firstElementChild;
-                
-                const person = JSON.parse(await this.xhr("/services/people/"+ subjectIdentity, "GET", {"Accept": "application/json"}, "", "text"));
-
-                const imageElement = messageInputElement.querySelector("img");
-                imageElement.src = "/services/people/" + Controller.sessionOwner.identity + "/avatar";
+            for (let message of messages) {
+                const messageOutputElement = document.querySelector("#message-output-template").content.cloneNode(true).firstElementChild;
+                messageList.appendChild(messageOutputElement);
+                const imageElement = messageOutputElement.querySelector("img");
+                imageElement.src = "/services/people/" + message.authorReference + "/avatar";
+                //messageOutputElement.querySelector("output.message-meta").innerText;
+                messageOutputElement.querySelector("output.message-body").innerText = message.body;
             }
 
             //const messageOutputElement = document.querySelector("#message-output-template").content.cloneNode(true).firstElementChild;
