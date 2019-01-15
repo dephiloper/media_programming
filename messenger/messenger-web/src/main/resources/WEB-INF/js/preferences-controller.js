@@ -148,7 +148,7 @@
 			// to "/services/people/{id}/avatar?cache-bust=" + Date.now() in order to bypass the
 			// browser's image cache and display the modified image.
 
-			if (avatarFile.type !== 'image/jpeg' && avatarFile.type !== 'image/jpeg') throw new Error("HTTP 418 I'm a teapot");
+			if (avatarFile.type !== 'image/gif' && avatarFile.type !== 'image/gif') throw new Error("HTTP 418 I'm a teapot");
 
 			try {
 				await this.xhr("/services/people/" + Controller.sessionOwner.identity + "/avatar", "PUT", {"Content-Type": avatarFile.type}, avatarFile, "text");
