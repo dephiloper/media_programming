@@ -43,6 +43,6 @@ xdotool mousemove 324 153
 xdotool click 1
 
 # click ines
-sleep 0.3
-xdotool mousemove 90 270
-xdotool click 1
+# sleep 0.3
+# xdotool mousemove 90 270
+# xdotool click 1

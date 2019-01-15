@@ -82,8 +82,6 @@ function createResourceWithQueryParameters(resource, queryParameters) {
 
 			let resource = createResourceWithQueryParameters("/services/people", queryParameters)
 
-			// if (document.querySelector())
-
 			// query rest api
 			let people = JSON.parse(await this.xhr(resource, "GET", {"Accept": "application/json"}, "", "text"))
 			let peopleReferences = []
@@ -120,9 +118,7 @@ function createResourceWithQueryParameters(resource, queryParameters) {
 		value: async function (personIdentity) {
 			let peopleObservedReferences = Controller.sessionOwner.peopleObservedReferences;
 
-			console.log("is person observed: " + peopleObservedReferences.includes(personIdentity))
-
-			if (peopleObservedReferences.includes(personIdentity)) {
+			if (!peopleObservedReferences.includes(personIdentity)) {
 				peopleObservedReferences.push(personIdentity)
 			} else {
 				var index = peopleObservedReferences.indexOf(personIdentity);
@@ -131,12 +127,22 @@ function createResourceWithQueryParameters(resource, queryParameters) {
 				}
 			}
 
-			let content = "peopleObserved=2&peopleObserved=6"
-			// TODO: make content right
+			// build content
+			let content = ""
+			for (let i in peopleObservedReferences) {
+				content += "peopleObserved=" + peopleObservedReferences[i] + "&"
+			}
+			// remove last '&'
+			if (content.length > 0) {
+				content = content.substring(0, content.length-1)
+			}
 
 			let resource = "/services/people/" + Controller.sessionOwner.identity + "/peopleObserved"
 
-			fetch(resource, {method: "PUT", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: content})
+			let response = await fetch(resource, {method: "PUT", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: content})
+			if (!response.ok) throw new Error("HTTP " + response.status + " " + response.statusText);
+
+			let html_people_observed = document.querySelector(".people-observed")
 		}
 	});
 
