@@ -142,7 +142,12 @@ function createResourceWithQueryParameters(resource, queryParameters) {
 			let response = await fetch(resource, {method: "PUT", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: content})
 			if (!response.ok) throw new Error("HTTP " + response.status + " " + response.statusText);
 
+			Controller.sessionOwner = JSON.parse(await this.xhr("/services/people/"+Controller.sessionOwner.identity, "GET", {"Accept": "application/json"}, "", "text"));
+
 			let html_people_observed = document.querySelector(".people-observed")
+			let html_people_observing = document.querySelector(".people-observing")
+			this.refreshAvatarSlider(html_people_observing.querySelector("span.slider"), Controller.sessionOwner.peopleObservingReferences, person => this.toggleObservation(person.identity));
+			this.refreshAvatarSlider(html_people_observed.querySelector("span.slider"), Controller.sessionOwner.peopleObservedReferences, person => this.toggleObservation(person.identity));
 		}
 	});
 
