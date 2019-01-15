@@ -40,11 +40,9 @@
             this.displayError();
 
             const mainElement = document.querySelector("main");
-            const avatarSlider = document.querySelector("#subjects-template").content.cloneNode(true).firstElementChild;
-            mainElement.appendChild(avatarSlider);
-            console.log(Controller.sessionOwner);
-            this.refreshAvatarSlider(avatarSlider.querySelector("span.slider"), Controller.sessionOwner.peopleObservingReferences, person => this.displayMessageEditor(this, person.identity));
-            mainElement.appendChild(document.querySelector("#messages-template").content.cloneNode(true).firstElementChild);
+            const subjectsElement = document.querySelector("#subjects-template").content.cloneNode(true).firstElementChild;
+            mainElement.appendChild(subjectsElement);
+            this.refreshAvatarSlider(subjectsElement.querySelector("span.slider"), Controller.sessionOwner.peopleObservingReferences, person => this.displayMessageEditor(this, person.identity));
             this.displayRootMessages();
 
         }
@@ -54,6 +52,11 @@
         enumerable: false,
         configurable: false, // TODO attributes ripped from preferences display Session owner because idk
         value: function () {
+            const messageList = document.querySelector(".messages ul");
+            //const messageOutputElement = document.querySelector("#message-output-template").content.cloneNode(true).firstElementChild;
+            //messageList.appendChild(messageOutputElement);
+
+
             /**
             * TODO
                 Die Instanz-Methode displayMessages() soll gegebene Nachrichten als Kinder des
@@ -78,6 +81,10 @@
                 /services/entities/{id}/messagesCaused abgefragt, gesammelt, und im Section-Element
                 mit der CSS-Klasse „messages“ mittels displayMessages() angezeigt.
             */
+            const mainElement = document.querySelector("main");
+            mainElement.appendChild(document.querySelector("#messages-template").content.cloneNode(true).firstElementChild);
+            this.displayMessages();
+
         }
     });
 
@@ -100,7 +107,7 @@
     Object.defineProperty(MessagesController.prototype, "displayMessageEditor", {
         enumerable: false,
         configurable: false, // TODO attributes ripped from preferences display Session owner because idk
-        value: function (parentElement, subjectIdentity) {
+        value: async function (parentElement, subjectIdentity) {
             /**
              * TODO
                  Die Instanz-Methode displayMessageEditor(parentElement, subjectIdentity)
@@ -109,17 +116,36 @@
                  erhalten. Bei Klick auf deren Sende-Knopf soll die Nachricht mittels
                  persistMessage() gespeichert, und die Hierarchieebene frisch geladen werden.
              */
+
+            const messageList = document.querySelector(".messages ul");
+            const messageInputElement = document.querySelector("#message-input-template").content.cloneNode(true).firstElementChild;
+            messageList.appendChild(messageInputElement);
+
+            const person = JSON.parse(await this.xhr("/services/people/"+ subjectIdentity, "GET", {"Accept": "application/json"}, "", "text"));
+
+            const imageElement = messageInputElement.querySelector("img");
+            imageElement.src = "/services/people/" + Controller.sessionOwner.identity + "/avatar";
+
+            const buttonElement = messageInputElement.querySelector("button");
+            buttonElement.addEventListener("click", event => this.persistMessage(messageInputElement, subjectIdentity));
+
+
+            /*            const anchorElement = document.createElement("a");
+                        anchorElement.appendChild(imageElement);
+                        anchorElement.appendChild(document.createTextNode(person.name.given));
+                        anchorElement.title = person.name.given + " " + person.name.family;
+                        anchorElement.addEventListener("click", event => clickAction(person));
+                        sliderElement.appendChild(anchorElement);*/
         }
     });
 
     Object.defineProperty(MessagesController.prototype, "persistMessage", {
         enumerable: false,
         configurable: false, // TODO attributes ripped from preferences display Session owner because idk
-        value: function (messageElement, subjectIdentity) {
-            /**
-            * TODO
-                Soll eine neue Nachricht mittels REST-Call speichern.
-            */
+        value: async function (messageElement, subjectIdentity) {
+            const message = messageElement.querySelector("textarea").value;
+            console.log(message);
+            await this.xhr("/services/messages/?subjectReference="+subjectIdentity, "POST", {"Accept": "application/json"}, message, "text")
         }
     });
 
