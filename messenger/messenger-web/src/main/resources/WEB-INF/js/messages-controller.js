@@ -213,8 +213,8 @@
     Object.defineProperty(MessagesController.prototype, "persistMessage", {
         enumerable: false,
         configurable: false, // TODO attributes ripped from preferences display Session owner because idk
-        value: async function (messageElement, subjectIdentity) {
-            const message = messageElement.querySelector("textarea").value;
+        value: async function (messageInputElement, subjectIdentity) {
+            const message = messageInputElement.querySelector("textarea").value;
             await this.xhr("/services/messages/?subjectReference="+subjectIdentity, "POST", {"Accept": "application/json"}, message, "text");
         }
     });
