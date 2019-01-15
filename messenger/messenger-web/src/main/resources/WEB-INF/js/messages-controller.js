@@ -51,25 +51,7 @@
     Object.defineProperty(MessagesController.prototype, "displayMessages", {
         enumerable: false,
         configurable: false, // TODO attributes ripped from preferences display Session owner because idk
-        value: async function () {
-            const messageList = document.querySelector(".messages ul");
-            const messages = JSON.parse(await this.xhr("/services/messages/", "GET", {"Accept": "application/json"}, "", "text"));
-
-            for (let message of messages) {
-                const messageOutputElement = document.querySelector("#message-output-template").content.cloneNode(true).firstElementChild;
-                messageList.appendChild(messageOutputElement);
-                const imageElement = messageOutputElement.querySelector("img");
-                imageElement.src = "/services/people/" + message.authorReference + "/avatar";
-                //messageOutputElement.querySelector("output.message-meta").innerText;
-
-                messageOutputElement.querySelector("output.message-body").innerText = message.body;
-                messageOutputElement.querySelector(".message-plus").addEventListener("click", event => this.toggleChildMessages());
-            }
-
-            //const messageOutputElement = document.querySelector("#message-output-template").content.cloneNode(true).firstElementChild;
-            //messageList.appendChild(messageOutputElement);
-
-
+        value: async function (parentMessageOutputElement, messages) {
             /**
             * TODO
                 Die Instanz-Methode displayMessages() soll gegebene Nachrichten als Kinder des
@@ -79,13 +61,55 @@
                 aufrufen um eine Nachricht zu erzeugen welche die gewählte Nachricht als subject
                 assoziiert.
             */
+
+            const messageList = parentMessageOutputElement.querySelector("ul");
+            while (messageList.firstChild) {
+                messageList.removeChild(messageList.firstChild);
+            }
+
+            for (let message of messages) {
+                // TODO: whats that?
+                /*
+                if (message.subjectReference !== Controller.sessionOwner.identity &&
+                    Controller.sessionOwner.peopleObservedReferences.indexOf(message.subjectReference) < 0)
+                    continue;
+                    */
+
+                const messageOutputElement = document.querySelector("#message-output-template").content.cloneNode(true).firstElementChild;
+                messageList.appendChild(messageOutputElement);
+
+                const imageElement = messageOutputElement.querySelector("img");
+                imageElement.src = "/services/people/" + message.authorReference + "/avatar";
+                imageElement.addEventListener("click", event => this.displayMessageEditor(messageOutputElement, message.identity));
+
+                const author = JSON.parse(await this.xhr("/services/people/" + message.authorReference, "GET", {"Accept": "application/json"}, "", "text"));
+                messageOutputElement.querySelector("output.message-meta").innerHTML = author.email + " " + new Date(message.creationTimestamp).toLocaleString();
+                messageOutputElement.querySelector("output.message-body").innerText = message.body;
+
+                messageOutputElement.querySelector(".message-plus").addEventListener("click", event => this.toggleChildMessages(event, message, messageOutputElement));
+            }
+
+            /*
+            messageList.appendChild(messageOutputElement);
+
+            const imageElement = messageOutputElement.querySelector("img");
+            imageElement.src = "/services/people/" + message.authorReference + "/avatar";
+            imageElement.addEventListener("click", event => this.displayMessageEditor(messageOutputElement, message.identity));
+
+            const author = JSON.parse(await this.xhr("/services/people/" + message.authorReference, "GET", {"Accept": "application/json"}, "", "text"));
+            const mainSubject = JSON.parse(await this.xhr("/services/people/" + message.subjectReference, "GET", {"Accept": "application/json"}, "", "text"));
+            messageOutputElement.querySelector("output.message-meta").innerHTML = author.email + " " + new Date(message.creationTimestamp).toLocaleString() + " <b>to: " + mainSubject.name.given + " " + mainSubject.name.family + "</b>";
+            messageOutputElement.querySelector("output.message-body").innerText = message.body;
+
+            messageOutputElement.querySelector(".message-plus").addEventListener("click", event => this.toggleChildMessages(event, message));
+            */
         }
     });
 
     Object.defineProperty(MessagesController.prototype, "displayRootMessages", {
         enumerable: false,
         configurable: false, // TODO attributes ripped from preferences display Session owner because idk
-        value: function () {
+        value: async function () {
             /**
             * TODO
                 Die Instanz-Methode displayRootMessages() soll diejenigen Nachrichten
@@ -96,24 +120,58 @@
             */
             const mainElement = document.querySelector("main");
             mainElement.appendChild(document.querySelector("#messages-template").content.cloneNode(true).firstElementChild);
-            this.displayMessages();
 
+            const messageList = document.querySelector(".messages ul");
+            let messages = JSON.parse(await this.xhr("/services/messages/", "GET", {"Accept": "application/json"}, "", "text"));
+
+            for (let message of messages) {
+                if (message.subjectReference !== Controller.sessionOwner.identity &&
+                    Controller.sessionOwner.peopleObservedReferences.indexOf(message.subjectReference) < 0)
+                    continue;
+
+                const messageOutputElement = document.querySelector("#message-output-template").content.cloneNode(true).firstElementChild;
+                messageList.appendChild(messageOutputElement);
+
+                const imageElement = messageOutputElement.querySelector("img");
+                imageElement.src = "/services/people/" + message.authorReference + "/avatar";
+                imageElement.addEventListener("click", event => this.displayMessageEditor(messageOutputElement, message.identity));
+
+                const author = JSON.parse(await this.xhr("/services/people/" + message.authorReference, "GET", {"Accept": "application/json"}, "", "text"));
+                const mainSubject = JSON.parse(await this.xhr("/services/people/" + message.subjectReference, "GET", {"Accept": "application/json"}, "", "text"));
+                messageOutputElement.querySelector("output.message-meta").innerHTML = author.email + " " + new Date(message.creationTimestamp).toLocaleString() + " <b>to: " + mainSubject.name.given + " " + mainSubject.name.family + "</b>";
+                messageOutputElement.querySelector("output.message-body").innerText = message.body;
+
+                messageOutputElement.querySelector(".message-plus").addEventListener("click", event => this.toggleChildMessages(event, message, messageOutputElement));
+            }
         }
     });
 
     Object.defineProperty(MessagesController.prototype, "toggleChildMessages", {
         enumerable: false,
         configurable: false, // TODO attributes ripped from preferences display Session owner because idk
-        value: function () {
+        value: async function (event, message, messageOutputElement) {
             /**
              * TODO
-                 Die Instanz-Methode toggleChildMessages() soll eine NachrichtenHierarchieebene
+                 Die Instanz-Methode toggleChildMessages() soll eine Nachrichten Hierarchieebene
                  entweder ein- oder ausblenden, je nachdem ob sie bereits ein- oder
                  ausgeblendet ist. Wird eine Hierarchieebene eingeblendet, dann sollen diejenigen
                  Nachrichten welche die Parent-Message als subject besitzen mittels REST abgefragt,
                  und mittels displayMessages() zur Anzeige gebracht werden. Zum Ausblenden soll
                  displayMessages() dagegen mit einer leeren Message-Menge aufgerufen werden.
              */
+
+            if (event.target.className == "message-plus") {
+                event.target.className = "message-minus";
+
+                // rest request
+                let messages = JSON.parse(await this.xhr("/services/entities/" + message.identity + "/messagesCaused", "GET", {"Accept": "application/json"}, "", "text"))
+
+                this.displayMessages(messageOutputElement, messages)
+            } else {
+                event.target.className = "message-plus";
+                this.displayMessages(messageOutputElement, [])
+            }
+            
         }
     });
 
@@ -134,7 +192,7 @@
             const messageInputElement = document.querySelector("#message-input-template").content.cloneNode(true).firstElementChild;
             messageList.appendChild(messageInputElement);
 
-            const person = JSON.parse(await this.xhr("/services/people/"+ subjectIdentity, "GET", {"Accept": "application/json"}, "", "text"));
+            //const person = JSON.parse(await this.xhr("/services/people/"+ subjectIdentity, "GET", {"Accept": "application/json"}, "", "text"));
 
             const imageElement = messageInputElement.querySelector("img");
             imageElement.src = "/services/people/" + Controller.sessionOwner.identity + "/avatar";

@@ -10,9 +10,7 @@ import javax.persistence.*;
 import javax.validation.constraints.*;
 import javax.ws.rs.*;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 import static javax.ws.rs.core.MediaType.*;
 import static javax.ws.rs.core.Response.Status.*;
@@ -96,6 +94,11 @@ public class MessageService implements PersistenceManagerFactoryContainer {
         final Message message = new Message(requester, subject);
         message.setBody(body);
         message.generateCreationTimestampFromSystemTime();
+
+        Collection<Message> messagesCaused = subject.getMessagesCaused();
+        messagesCaused.add(message);
+        subject.setMessagesCaused(new HashSet<>(messagesCaused));
+
         entityManager.persist(message);
 
         try {

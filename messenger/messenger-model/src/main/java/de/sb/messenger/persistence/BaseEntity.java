@@ -127,7 +127,7 @@ public class BaseEntity implements Comparable<BaseEntity> {
         return sortSet(messagesCaused);
     }
 
-    protected void setMessagesCaused(Set<Message> messagesCaused) {
+    public void setMessagesCaused(Set<Message> messagesCaused) {
         this.messagesCaused = messagesCaused;
     }
 
