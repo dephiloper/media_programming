@@ -33,6 +33,9 @@
 			const mainElement = document.querySelector("main");
 			mainElement.appendChild(document.querySelector("#login-template").content.cloneNode(true).firstElementChild);
 			mainElement.querySelector("button").addEventListener("click", event => this.login());
+
+			//TODO remove autologin
+			this.login();
 		}
 	});
 
@@ -49,7 +52,6 @@
 			this.displayError();
 
 			try {
-				console.log("login");
 				const inputElements = document.querySelectorAll("section.login input");
 				const email = inputElements[0].value.trim();
 				const password = inputElements[1].value.trim();

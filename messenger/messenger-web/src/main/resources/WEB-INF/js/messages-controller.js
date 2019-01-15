@@ -1,41 +1,56 @@
 "use strict";
 
+
+/**
+ * TODO Der Typ MessagesController dient zur Steuerung der Messages-View:
+     • Datei messages-controller.js (neu zu erstellen)
+     • Templates:
+         ◦ subjects-template
+         ◦ messages-template
+         ◦ message-output-template
+         ◦ message-input-template
+ */
 (function () {
     const Controller = de_sb_messenger.Controller;
 
-    const MessageController = function () {
+    const MessagesController = function () {
         Controller.call(this);
     };
-    MessageController.prototype = Object.create(Controller.prototype);
-    MessageController.prototype.constructor = MessageController;
+    MessagesController.prototype = Object.create(Controller.prototype);
+    MessagesController.prototype.constructor = MessagesController;
 
     /**
      * Displays the associated view.
      */
-    Object.defineProperty(MessageController.prototype, "display", {
+    Object.defineProperty(MessagesController.prototype, "display", {
         enumerable: false,
         configurable: false, // TODO attributes ripped from welcome controller
         writable: true,
         value: function () {
-            // Controller.sessionOwner = null;
-            // Controller.entityCache.clear();
-            //
-            // const mainElement = document.querySelector("main");
-            // mainElement.appendChild(document.querySelector("#login-template").content.cloneNode(true).firstElementChild);
-            // mainElement.querySelector("button").addEventListener("click", event => this.login());
-
             /**
-            * TODO
-                Die Instanz-Methode display() stellt diese View teilweise dar, und registriert die
-                Methode displayMessageEditor() als Callback für das Klicken auf einen der
-                Benutzer-Avatare im Avatar-Slider, zur Erzeugung einer Nachricht mit der gewählten
-                Person als subject. Des Weiteren wird die Methode displayRootMessages()
-                aufgerufen um die Darstellung der Seite zu vervollständigen.
-            */
+             * TODO
+                 Die Instanz-Methode display() stellt diese View (Messages-View) teilweise dar, und registriert die
+                 Methode displayMessageEditor() als Callback für das Klicken auf einen der
+                 Benutzer-Avatare im Avatar-Slider, zur Erzeugung einer Nachricht mit der gewählten
+                 Person als subject. Des Weiteren wird die Methode displayRootMessages()
+                 aufgerufen um die Darstellung der Seite zu vervollständigen.
+             */
+
+            if (!Controller.sessionOwner) return;
+            this.displayError();
+
+            const mainElement = document.querySelector("main");
+            const avatarSlider = document.querySelector("#subjects-template").content.cloneNode(true).firstElementChild;
+            mainElement.appendChild(avatarSlider);
+            console.log(Controller.sessionOwner);
+            this.refreshAvatarSlider(avatarSlider.querySelector("span.slider"), Controller.sessionOwner.peopleObservingReferences, person => this.displayMessageEditor(this, person.identity));
+            mainElement.appendChild(document.querySelector("#messages-template").content.cloneNode(true).firstElementChild);
+            this.displayRootMessages();
+
         }
     });
 
-    Object.defineProperty(MessageController.prototype, "displayMessages", {
+    Object.defineProperty(MessagesController.prototype, "displayMessages", {
         enumerable: false,
         configurable: false, // TODO attributes ripped from preferences display Session owner because idk
         value: function () {
@@ -51,7 +66,7 @@
         }
     });
 
-    Object.defineProperty(MessageController.prototype, "displayRootMessages", {
+    Object.defineProperty(MessagesController.prototype, "displayRootMessages", {
         enumerable: false,
         configurable: false, // TODO attributes ripped from preferences display Session owner because idk
         value: function () {
@@ -66,7 +81,7 @@
         }
     });
 
-    Object.defineProperty(MessageController.prototype, "toggleChildMessages", {
+    Object.defineProperty(MessagesController.prototype, "toggleChildMessages", {
         enumerable: false,
         configurable: false, // TODO attributes ripped from preferences display Session owner because idk
         value: function () {
@@ -82,7 +97,7 @@
         }
     });
 
-    Object.defineProperty(MessageController.prototype, "displayMessageEditor", {
+    Object.defineProperty(MessagesController.prototype, "displayMessageEditor", {
         enumerable: false,
         configurable: false, // TODO attributes ripped from preferences display Session owner because idk
         value: function (parentElement, subjectIdentity) {
@@ -97,7 +112,7 @@
         }
     });
 
-    Object.defineProperty(MessageController.prototype, "persistMessage", {
+    Object.defineProperty(MessagesController.prototype, "persistMessage", {
         enumerable: false,
         configurable: false, // TODO attributes ripped from preferences display Session owner because idk
         value: function (messageElement, subjectIdentity) {
@@ -108,5 +123,13 @@
         }
     });
 
+    /**
+     * Perform controller callback registration during DOM load event handling.
+     */
+    window.addEventListener("load", event => {
+        const anchor = document.querySelector("header li:nth-of-type(2) > a");
+        const controller = new MessagesController();
+        anchor.addEventListener("click", event => controller.display());
+    });
 
 }());
