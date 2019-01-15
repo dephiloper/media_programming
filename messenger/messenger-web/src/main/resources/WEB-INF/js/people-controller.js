@@ -91,7 +91,7 @@ function createResourceWithQueryParameters(resource, queryParameters) {
 
 			const mainElement = document.querySelector("main");
 
-			if (this.searchResult !== null) {
+			if (this.searchResult !== null && mainElement.hasChildNodes(this.searchResult)) {
 				mainElement.removeChild(this.searchResult);
 			}
 
