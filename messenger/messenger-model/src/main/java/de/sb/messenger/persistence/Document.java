@@ -2,12 +2,18 @@ package de.sb.messenger.persistence;
 
 import de.sb.toolbox.bind.JsonProtectedPropertyStrategy;
 
+import javax.imageio.ImageIO;
 import javax.json.bind.annotation.JsonbProperty;
 import javax.json.bind.annotation.JsonbTransient;
 import javax.json.bind.annotation.JsonbVisibility;
 import javax.persistence.*;
 import javax.validation.constraints.*;
 import javax.xml.bind.annotation.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 @Table(name = "Document", schema = "messenger")
 @Entity
@@ -44,9 +50,19 @@ public class Document extends BaseEntity {
         this.contentHash = EMPTY_CONTENT_HASH;
     }
 
-    public static byte[] scaledImageContent(String fileType, byte[] content, int width, int height) {
-        // TODO load from moodle
-        return EMPTY_CONTENT;
+    public static byte[] scaledImageContent(String fileType, byte[] content, int width, int height) throws IOException {
+        try (ByteArrayInputStream in = new ByteArrayInputStream(content); ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
+            BufferedImage img = ImageIO.read(in);
+            if (height == 0) height = (width * img.getHeight()) / img.getWidth();
+            if (width == 0) width = (height * img.getWidth()) / img.getHeight();
+
+            Image scaledImage = img.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+            BufferedImage imageBuff = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+            imageBuff.getGraphics().drawImage(scaledImage, 0, 0, new Color(0, 0, 0), null);
+
+            ImageIO.write(imageBuff, fileType, buffer);
+            return buffer.toByteArray();
+        }
     }
 
     @JsonbProperty

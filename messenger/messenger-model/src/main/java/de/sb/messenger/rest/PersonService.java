@@ -12,6 +12,7 @@ import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.util.*;
 
 import static de.sb.messenger.persistence.Person.PERSON_COMPARATOR;
@@ -177,7 +178,11 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         if (width == 0 || height == 0) {
             content = avatar.getContent();
         } else {
-            content = Document.scaledImageContent("jpg", avatar.getContent(), width, height);
+            try {
+                content = Document.scaledImageContent("jpg", avatar.getContent(), width, height);
+            } catch (IOException e) {
+                throw new ClientErrorException(INTERNAL_SERVER_ERROR); // todo idk which error is right here
+            }
         }
         return Response.ok(content, avatar.getContentType()).build();
     }
