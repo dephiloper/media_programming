@@ -51,8 +51,19 @@
     Object.defineProperty(MessagesController.prototype, "displayMessages", {
         enumerable: false,
         configurable: false, // TODO attributes ripped from preferences display Session owner because idk
-        value: function () {
+        value: async function () {
             const messageList = document.querySelector(".messages ul");
+            const messages = JSON.parse(await this.xhr("/services/messages/", "GET", {"Accept": "application/json"}, "", "text"));
+
+            for (let message in messages) {
+                const messageElement = document.querySelector("#message-output-template").content.cloneNode(true).firstElementChild;
+                
+                const person = JSON.parse(await this.xhr("/services/people/"+ subjectIdentity, "GET", {"Accept": "application/json"}, "", "text"));
+
+                const imageElement = messageInputElement.querySelector("img");
+                imageElement.src = "/services/people/" + Controller.sessionOwner.identity + "/avatar";
+            }
+
             //const messageOutputElement = document.querySelector("#message-output-template").content.cloneNode(true).firstElementChild;
             //messageList.appendChild(messageOutputElement);
 
@@ -144,8 +155,7 @@
         configurable: false, // TODO attributes ripped from preferences display Session owner because idk
         value: async function (messageElement, subjectIdentity) {
             const message = messageElement.querySelector("textarea").value;
-            console.log(message);
-            await this.xhr("/services/messages/?subjectReference="+subjectIdentity, "POST", {"Accept": "application/json"}, message, "text")
+            await this.xhr("/services/messages/?subjectReference="+subjectIdentity, "POST", {"Accept": "application/json"}, message, "text");
         }
     });
 
