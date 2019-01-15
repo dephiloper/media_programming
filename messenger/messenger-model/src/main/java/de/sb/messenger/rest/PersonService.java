@@ -4,6 +4,7 @@ import de.sb.messenger.persistence.*;
 import de.sb.toolbox.Copyright;
 import de.sb.toolbox.net.RestJpaLifecycleProvider;
 
+import javax.persistence.Cache;
 import javax.persistence.EntityManager;
 import javax.persistence.RollbackException;
 import javax.persistence.TypedQuery;
@@ -316,6 +317,9 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         person.setPeopleObserved(peopleObserved);
 
         entityManager.flush();
+
+        Cache cache = entityManager.getEntityManagerFactory().getCache();
+        cache.evict(person.getClass(), person.getIdentity());
 
         commitBegin(entityManager);
     }
