@@ -50,13 +50,12 @@ public class MessageService implements PersistenceManagerFactoryContainer {
         query.setParameter("upperCreationTimestamp", upperCreationTimestamp);
         
         List<Long> messageList = query.getResultList();
-        // TODO: make other queries like this
         return messageList
                 .stream()
                 .map(reference -> entityManager.find(Message.class, reference))
-                .filter(message -> message != null)
+                .filter(Objects::nonNull)
                 .sorted(Comparator.naturalOrder())
-                .toArray(length -> new Message[length]);
+                .toArray(Message[]::new);
     }
 
     /**

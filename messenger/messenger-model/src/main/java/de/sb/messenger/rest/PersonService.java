@@ -15,7 +15,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.rmi.ServerError;
 import java.util.*;
 
 import static de.sb.messenger.persistence.Person.PERSON_COMPARATOR;
@@ -26,7 +25,7 @@ import static javax.ws.rs.core.Response.Status.*;
 @Path("people")
 @Copyright(year = 2018, holders = "Gruppe Drei (Gruppe 5)")
 public class PersonService implements PersistenceManagerFactoryContainer {
-    private static final String QUERY_STRING = "SELECT p from Person as p WHERE "
+    private static final String QUERY_STRING = "SELECT p.identity from Person as p WHERE "
             + "(:surname is null or p.name.family = :surname) and "
             + "(:forename is null or p.name.given = :forename) and "
             + "(:email is null or p.email = :email) and "
@@ -48,7 +47,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
      */
     @GET
     @Produces({APPLICATION_JSON, APPLICATION_XML})
-    public Collection<Person> queryPeople(
+    public Person[] queryPeople(
             @QueryParam("resultOffset") int resultOffset,
             @QueryParam("resultLimit") int resultLimit,
             @QueryParam("surname") String familyName,
@@ -63,8 +62,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
     ) {
         final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
 
-        // TODO: do it with the reference like in MessageService
-        TypedQuery<Person> query = entityManager.createQuery(QUERY_STRING, Person.class);
+        TypedQuery<Long> query = entityManager.createQuery(QUERY_STRING, Long.class);
 
         if (resultOffset > 0) query.setFirstResult(resultOffset);
         if (resultLimit > 0) query.setMaxResults(resultLimit);
@@ -78,9 +76,13 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         query.setParameter("lowerCreationTimestamp", lowerCreationTimestamp);
         query.setParameter("upperCreationTimestamp", upperCreationTimestamp);
 
-        List<Person> people = query.getResultList();
-        people.sort(PERSON_COMPARATOR);
-        return people;
+        List<Long> people = query.getResultList();
+        return people
+                .stream()
+                .map(reference -> entityManager.find(Person.class, reference))
+                .filter(Objects::nonNull)
+                .sorted(PERSON_COMPARATOR)
+                .toArray(Person[]::new);
     }
 
     /**
