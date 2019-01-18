@@ -231,11 +231,11 @@
 
             const imageElement = messageOutputElement.querySelector("img");
             imageElement.src = messageInputElement.querySelector("img").src;
-            imageElement.addEventListener("click", event => this.displayMessageEditor(messageOutputElement, subject.identity));
+            imageElement.addEventListener("click", event => this.displayMessageEditor(messageOutputElement, subjectIdentity));
             messageOutputElement.querySelector("output.message-body").innerText = message;
             //const author = JSON.parse(await this.xhr("/services/people/" + message.authorReference, "GET", {"Accept": "application/json"}, "", "text"));
-            const mainSubject = JSON.parse(await this.xhr("/services/people/" + subjectIdentity, "GET", {"Accept": "application/json"}, "", "text"));
-            messageOutputElement.querySelector("output.message-meta").innerHTML = Controller.sessionOwner.email + " " + new Date(Date.now()).toLocaleString() + " <b>to: " + mainSubject.name.given + " " + mainSubject.name.family + "</b>";
+            const mainSubject = JSON.parse(await this.xhr("/services/entities/" + subjectIdentity, "GET", {"Accept": "application/json"}, "", "text"));
+            messageOutputElement.querySelector("output.message-meta").innerHTML = Controller.sessionOwner.email + " " + new Date(Date.now()).toLocaleString();
             
             
             messageList.removeChild(messageInputElement);

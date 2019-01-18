@@ -72,7 +72,7 @@ public class BaseEntity implements Comparable<BaseEntity> {
     private long creationTimestamp;
 
     @OneToMany(mappedBy = "subject", cascade = {CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REMOVE})
-    private Set<Message> messagesCaused; // TODO: Is this right?
+    private Set<Message> messagesCaused;
 
     protected BaseEntity() {
         this(0, 0, 0, new HashSet<>());

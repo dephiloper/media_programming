@@ -105,8 +105,6 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         if (requester == null) throw new ClientErrorException(FORBIDDEN);
         if (personTemplate.getIdentity() != requesterIdentity && requester.getGroup() != Group.ADMIN) throw new ClientErrorException(FORBIDDEN);
 
-        // TODO nochmal rüberschauen
-
         Person person = null;
         if (personTemplate.getIdentity() != 0)
             person = entityManager.find(Person.class, personTemplate.getIdentity());
@@ -182,7 +180,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
             try {
                 content = Document.scaledImageContent("jpg", avatar.getContent(), width, height);
             } catch (IOException e) {
-                throw new ClientErrorException(INTERNAL_SERVER_ERROR); // todo idk which error is right here
+                throw new ClientErrorException(BAD_REQUEST);
             }
         }
         return Response.ok(content, avatar.getContentType()).build();
