@@ -41,7 +41,9 @@
             const mainElement = document.querySelector("main");
             const subjectsElement = document.querySelector("#subjects-template").content.cloneNode(true).firstElementChild;
             mainElement.appendChild(subjectsElement);
-            this.refreshAvatarSlider(subjectsElement.querySelector("span.slider"), Controller.sessionOwner.peopleObservingReferences, person => this.displayMessageEditor(this, person.identity));
+            const messageBox = document.querySelector(".messages")
+            console.log(messageBox)
+            this.refreshAvatarSlider(subjectsElement.querySelector("span.slider"), Controller.sessionOwner.peopleObservingReferences, person => this.displayMessageEditor(messageBox, person.identity));
             this.displayRootMessages();
 
         }
@@ -190,7 +192,9 @@
 			 * geladen werden.
 			 */
 
-            const messageList = document.querySelector(".messages ul");
+            console.log(parentElement)
+            const messageList = parentElement.querySelector("ul");
+            // const messageList = document.querySelector(".messages ul");
             const messageInputElement = document.querySelector("#message-input-template").content.cloneNode(true).firstElementChild;
             messageList.appendChild(messageInputElement);
 

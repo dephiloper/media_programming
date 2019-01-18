@@ -19,8 +19,8 @@ import static javax.ws.rs.core.Response.Status.*;
 @Copyright(year = 2018, holders = "Gruppe Drei (Gruppe 5)")
 public class MessageService implements PersistenceManagerFactoryContainer {
 
-    private static final String QUERY_STRING = "SELECT m from Message as m WHERE "
-            + "(:fragment is null or m.body like :fragment) and "
+    private static final String QUERY_STRING = "SELECT m.identity from Message as m WHERE "
+            + "(:bodyFragment is null or m.body like :bodyFragment) and "
             + "(:lowerCreationTimestamp is null or m.creationTimestamp >= :lowerCreationTimestamp) and"
             + "(:upperCreationTimestamp is null or m.creationTimestamp <= :upperCreationTimestamp)";
 
@@ -32,26 +32,31 @@ public class MessageService implements PersistenceManagerFactoryContainer {
      */
     @GET
     @Produces({APPLICATION_JSON, APPLICATION_XML})
-    public Collection<Message> queryMessages (
-            @QueryParam("fragment") String fragment,
+    public Message[] queryMessages (
+            @QueryParam("bodyFragment") String bodyFragment,
             @QueryParam("lowerCreationTimestamp") Long lowerCreationTimestamp,
             @QueryParam("upperCreationTimestamp") Long upperCreationTimestamp,
             @QueryParam("resultOffset") int resultOffset,
             @QueryParam("resultLimit") int resultLimit
     ) {
     	final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
-        TypedQuery<Message> query = entityManager.createQuery(QUERY_STRING, Message.class);
+        TypedQuery<Long> query = entityManager.createQuery(QUERY_STRING, Long.class);
 
         if (resultOffset > 0) query.setFirstResult(resultOffset);
         if (resultLimit > 0) query.setMaxResults(resultLimit);
-        query.setParameter("fragment", fragment);
+
+        query.setParameter("bodyFragment", bodyFragment);
         query.setParameter("lowerCreationTimestamp", lowerCreationTimestamp);
         query.setParameter("upperCreationTimestamp", upperCreationTimestamp);
         
-        List<Message> messageList = query.getResultList();
-        messageList.sort(Comparator.comparing(Message::getIdentity));
-
-        return messageList;
+        List<Long> messageList = query.getResultList();
+        // TODO: make other queries like this
+        return messageList
+                .stream()
+                .map(reference -> entityManager.find(Message.class, reference))
+                .filter(message -> message != null)
+                .sorted(Comparator.naturalOrder())
+                .toArray(length -> new Message[length]);
     }
 
     /**

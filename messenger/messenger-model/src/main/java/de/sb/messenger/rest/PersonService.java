@@ -14,6 +14,8 @@ import javax.validation.constraints.PositiveOrZero;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.rmi.ServerError;
 import java.util.*;
 
 import static de.sb.messenger.persistence.Person.PERSON_COMPARATOR;
@@ -61,6 +63,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
     ) {
         final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("messenger");
 
+        // TODO: do it with the reference like in MessageService
         TypedQuery<Person> query = entityManager.createQuery(QUERY_STRING, Person.class);
 
         if (resultOffset > 0) query.setFirstResult(resultOffset);
@@ -108,19 +111,28 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         Person person = null;
         if (personTemplate.getIdentity() != 0)
             person = entityManager.find(Person.class, personTemplate.getIdentity());
-
-        // new person
-        if (person == null) {
-            person = personTemplate;
+            if (person == null) throw new ClientErrorException(NOT_FOUND);
+        else {
             person.generateCreationTimestampFromSystemTime();
             Document doc = entityManager.find(Document.class, 1L); // default avatar
+            if (doc == null) throw new ServerErrorException(512);
             person.setAvatar(doc);
-            entityManager.persist(person);
-        } else { // update person
-            person.update(personTemplate);
         }
 
-        entityManager.flush();
+        person.setEmail(personTemplate.getEmail());
+        person.getName().setFamily(personTemplate.getName().getFamily());
+        person.getName().setGiven(personTemplate.getName().getGiven());
+        // TODO: other parameters (not password)
+
+        if (setPassword != null)
+            person.setPasswordHash(HashTools.sha256HashCode(setPassword.getBytes(StandardCharsets.UTF_8)));
+
+        if (personTemplate.getIdentity() == 0) {
+            entityManager.persist(person);
+        } else {
+            entityManager.flush();
+        }
+
         commitBegin(entityManager);
 
         return person.getIdentity();
@@ -245,7 +257,7 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         return person.getIdentity();
     }
 
-    private void commitBegin(EntityManager entityManager) {
+    static private void commitBegin(EntityManager entityManager) {
         try {
             entityManager.getTransaction().commit();
         } catch (final RollbackException exception) {
