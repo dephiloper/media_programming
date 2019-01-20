@@ -156,7 +156,7 @@
                  und mittels displayMessages() zur Anzeige gebracht werden. Zum Ausblenden soll
                  displayMessages() dagegen mit einer leeren Message-Menge aufgerufen werden.
              */
-            if (event.target.className == "message-plus") {
+			if (event.target.className == "message-plus") {
                 event.target.className = "message-minus";
 
                 // rest request
@@ -174,14 +174,14 @@
         enumerable: false,
         configurable: false,
         writable: false,
-        value: async function (newInputBox, parentToAdd) {
+        value: async function (newInputBox, messageList) {
             if (this.inputBox != null) {
                 if (this.inputBox.parentElement != null) {
                     this.inputBox.parentNode.removeChild(this.inputBox);
                 }
             }
             this.inputBox = newInputBox;
-            parentToAdd.appendChild(newInputBox);
+            messageList.prepend(newInputBox);
         }
     });
 
@@ -198,12 +198,11 @@
 			 * persistMessage() gespeichert, und die Hierarchieebene frisch
 			 * geladen werden.
 			 */
-			
-            const messageList = document.querySelector(".messages ul");
+		
+            const messageList = parentElement.querySelector("ul");
             const messageInputElement = document.querySelector("#message-input-template").content.cloneNode(true).firstElementChild;
-
-            this.refreshInputBox(messageInputElement, parentElement)
-
+                
+            this.refreshInputBox(messageInputElement, messageList)
             // const person = JSON.parse(await this.xhr("/services/people/"+
 			// subjectIdentity, "GET", {"Accept": "application/json"}, "",
 			// "text"));
@@ -213,15 +212,6 @@
 
             const buttonElement = messageInputElement.querySelector("button");
             buttonElement.addEventListener("click", event => this.persistMessage(messageInputElement, subjectIdentity));
-
-            /*
-			 * const anchorElement = document.createElement("a");
-			 * anchorElement.appendChild(imageElement);
-			 * anchorElement.appendChild(document.createTextNode(person.name.given));
-			 * anchorElement.title = person.name.given + " " +
-			 * person.name.family; anchorElement.addEventListener("click", event =>
-			 * clickAction(person)); sliderElement.appendChild(anchorElement);
-			 */
         }
     });
 
@@ -229,23 +219,22 @@
         enumerable: false,
         configurable: false,
         value: async function (messageInputElement, subjectIdentity) {
-            const message = messageInputElement.querySelector("textarea").value;
-            await this.xhr("/services/messages/?subjectReference="+subjectIdentity, "POST", {"Accept": "application/json"}, message, "text");
+        	const message = messageInputElement.querySelector("textarea").value;
+            const newIdentity = await this.xhr("/services/messages/?subjectReference="+subjectIdentity, "POST", {"Accept": "application/json"}, message, "text");
         
-            const messageList = document.querySelector(".messages ul");
-            
             const messageOutputElement = document.querySelector("#message-output-template").content.cloneNode(true).firstElementChild;
-            messageList.appendChild(messageOutputElement);
+			const parent = messageInputElement.parentNode;
+			parent.appendChild(messageOutputElement);
 
             const imageElement = messageOutputElement.querySelector("img");
             imageElement.src = messageInputElement.querySelector("img").src;
-            imageElement.addEventListener("click", event => this.displayMessageEditor(messageOutputElement, subjectIdentity));
+            imageElement.addEventListener("click", event => this.displayMessageEditor(messageOutputElement, newIdentity));
             messageOutputElement.querySelector("output.message-body").innerText = message;
             //const author = JSON.parse(await this.xhr("/services/people/" + message.authorReference, "GET", {"Accept": "application/json"}, "", "text"));
             const mainSubject = JSON.parse(await this.xhr("/services/entities/" + subjectIdentity, "GET", {"Accept": "application/json"}, "", "text"));
             messageOutputElement.querySelector("output.message-meta").innerHTML = Controller.sessionOwner.email + " " + new Date(Date.now()).toLocaleString();
             
-            messageInputElement.parentNode.removeChild(messageInputElement);
+            parent.removeChild(messageInputElement);
             this.displayMessages(messageOutputElement, []);
         }
     });
