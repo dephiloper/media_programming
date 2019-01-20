@@ -29,7 +29,6 @@
         writable: true,			//true if and only if the value associated with the property may be changed with an assignment operator.
         
         value: function () {
-            console.log("function display");
             if (!Controller.sessionOwner) return;
             	this.displayError();
             	
@@ -39,7 +38,6 @@
             	mainElement.appendChild(subjectsElement);
             	this.displayRootMessages();
             	const messageBox = document.querySelector(".messages");
-            	console.log("MessageBox="+messageBox)
             	this.refreshAvatarSlider(subjectsElement.querySelector("span.slider"), Controller.sessionOwner.peopleObservingReferences, person => this.displayMessageEditor(messageBox, person.identity));
             } catch (error) {
 				this.displayError(error);
@@ -61,7 +59,6 @@
                 aufrufen um eine Nachricht zu erzeugen welche die gewählte Nachricht als subject
                 assoziiert.
             */
-			console.log("function displayMessages");
             const messageList = parentMessageOutputElement.querySelector("ul");
             while (messageList.firstChild) {
                 messageList.removeChild(messageList.firstChild);
@@ -119,7 +116,6 @@
 			 * im Section-Element mit der CSS-Klasse „messages“ mittels
 			 * displayMessages() angezeigt.
 			 */
-            console.log("function displayRootMessages");
             const mainElement = document.querySelector("main");
             mainElement.appendChild(document.querySelector("#messages-template").content.cloneNode(true).firstElementChild);
 
@@ -161,8 +157,7 @@
                  und mittels displayMessages() zur Anzeige gebracht werden. Zum Ausblenden soll
                  displayMessages() dagegen mit einer leeren Message-Menge aufgerufen werden.
              */
-			console.log("function toggleChildMessages");
-            if (event.target.className == "message-plus") {
+			if (event.target.className == "message-plus") {
                 event.target.className = "message-minus";
 
                 // rest request
@@ -189,13 +184,12 @@
 			 * persistMessage() gespeichert, und die Hierarchieebene frisch
 			 * geladen werden.
 			 */
-			
-            console.log(parentElement+" "+ subjectIdentity);
-            console.log("function displayMessageEditor")
-            const messageList = document.querySelector(".messages ul");
+		
+            const messageList = parentElement.querySelector("ul");
             const messageInputElement = document.querySelector("#message-input-template").content.cloneNode(true).firstElementChild;
                 
-            parentElement.appendChild(messageInputElement);
+          	//eElement.insertBefore(newFirstElement, eElement.firstChild);
+            messageList.prepend(messageInputElement);
             // const person = JSON.parse(await this.xhr("/services/people/"+
 			// subjectIdentity, "GET", {"Accept": "application/json"}, "",
 			// "text"));
@@ -205,16 +199,6 @@
 
             const buttonElement = messageInputElement.querySelector("button");
             buttonElement.addEventListener("click", event => this.persistMessage(messageInputElement, subjectIdentity));
-			
-
-            /*
-			 * const anchorElement = document.createElement("a");
-			 * anchorElement.appendChild(imageElement);
-			 * anchorElement.appendChild(document.createTextNode(person.name.given));
-			 * anchorElement.title = person.name.given + " " +
-			 * person.name.family; anchorElement.addEventListener("click", event =>
-			 * clickAction(person)); sliderElement.appendChild(anchorElement);
-			 */
         }
     });
 
@@ -222,24 +206,22 @@
         enumerable: false,
         configurable: false,
         value: async function (messageInputElement, subjectIdentity) {
-        	console.log("function persistMessage")
-            const message = messageInputElement.querySelector("textarea").value;
-            await this.xhr("/services/messages/?subjectReference="+subjectIdentity, "POST", {"Accept": "application/json"}, message, "text");
+        	const message = messageInputElement.querySelector("textarea").value;
+            const newIdentity = await this.xhr("/services/messages/?subjectReference="+subjectIdentity, "POST", {"Accept": "application/json"}, message, "text");
         
-            const messageList = document.querySelector(".messages ul");
-            
             const messageOutputElement = document.querySelector("#message-output-template").content.cloneNode(true).firstElementChild;
-            messageList.appendChild(messageOutputElement);
+			const parent = messageInputElement.parentNode;
+			parent.appendChild(messageOutputElement);
 
             const imageElement = messageOutputElement.querySelector("img");
             imageElement.src = messageInputElement.querySelector("img").src;
-            imageElement.addEventListener("click", event => this.displayMessageEditor(messageOutputElement, subjectIdentity));
+            imageElement.addEventListener("click", event => this.displayMessageEditor(messageOutputElement, newIdentity));
             messageOutputElement.querySelector("output.message-body").innerText = message;
             //const author = JSON.parse(await this.xhr("/services/people/" + message.authorReference, "GET", {"Accept": "application/json"}, "", "text"));
             const mainSubject = JSON.parse(await this.xhr("/services/entities/" + subjectIdentity, "GET", {"Accept": "application/json"}, "", "text"));
             messageOutputElement.querySelector("output.message-meta").innerHTML = Controller.sessionOwner.email + " " + new Date(Date.now()).toLocaleString();
             
-            messageInputElement.parentNode.removeChild(messageInputElement);
+            parent.removeChild(messageInputElement);
             this.displayMessages(messageOutputElement, []);
         }
     });
