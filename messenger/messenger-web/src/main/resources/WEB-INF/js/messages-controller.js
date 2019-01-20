@@ -13,6 +13,7 @@
 
     const MessagesController = function () {
         Controller.call(this);
+        this.inputBox = null;
     };
     MessagesController.prototype = Object.create(Controller.prototype);
     MessagesController.prototype.constructor = MessagesController;
@@ -29,22 +30,18 @@
         writable: true,			//true if and only if the value associated with the property may be changed with an assignment operator.
         
         value: function () {
-            console.log("function display");
             if (!Controller.sessionOwner) return;
             	this.displayError();
-            	
-			try{
+			try {
             	const mainElement = document.querySelector("main");
             	const subjectsElement = document.querySelector("#subjects-template").content.cloneNode(true).firstElementChild;
             	mainElement.appendChild(subjectsElement);
             	this.displayRootMessages();
             	const messageBox = document.querySelector(".messages");
-            	console.log("MessageBox="+messageBox)
             	this.refreshAvatarSlider(subjectsElement.querySelector("span.slider"), Controller.sessionOwner.peopleObservingReferences, person => this.displayMessageEditor(messageBox, person.identity));
             } catch (error) {
 				this.displayError(error);
 			}	
-
         }
     });
 
@@ -61,7 +58,6 @@
                 aufrufen um eine Nachricht zu erzeugen welche die gewählte Nachricht als subject
                 assoziiert.
             */
-			console.log("function displayMessages");
             const messageList = parentMessageOutputElement.querySelector("ul");
             while (messageList.firstChild) {
                 messageList.removeChild(messageList.firstChild);
@@ -119,7 +115,6 @@
 			 * im Section-Element mit der CSS-Klasse „messages“ mittels
 			 * displayMessages() angezeigt.
 			 */
-            console.log("function displayRootMessages");
             const mainElement = document.querySelector("main");
             mainElement.appendChild(document.querySelector("#messages-template").content.cloneNode(true).firstElementChild);
 
@@ -161,7 +156,6 @@
                  und mittels displayMessages() zur Anzeige gebracht werden. Zum Ausblenden soll
                  displayMessages() dagegen mit einer leeren Message-Menge aufgerufen werden.
              */
-			console.log("function toggleChildMessages");
             if (event.target.className == "message-plus") {
                 event.target.className = "message-minus";
 
@@ -173,6 +167,21 @@
                 event.target.className = "message-plus";
                 this.displayMessages(messageOutputElement, [])
             }
+        }
+    });
+
+    Object.defineProperty(MessagesController.prototype, "refreshInputBox", {
+        enumerable: false,
+        configurable: false,
+        writable: false,
+        value: async function (newInputBox, parentToAdd) {
+            if (this.inputBox != null) {
+                if (this.inputBox.parentElement != null) {
+                    this.inputBox.parentNode.removeChild(this.inputBox);
+                }
+            }
+            this.inputBox = newInputBox;
+            parentToAdd.appendChild(newInputBox);
         }
     });
 
@@ -190,12 +199,11 @@
 			 * geladen werden.
 			 */
 			
-            console.log(parentElement+" "+ subjectIdentity);
-            console.log("function displayMessageEditor")
             const messageList = document.querySelector(".messages ul");
             const messageInputElement = document.querySelector("#message-input-template").content.cloneNode(true).firstElementChild;
-                
-            parentElement.appendChild(messageInputElement);
+
+            this.refreshInputBox(messageInputElement, parentElement)
+
             // const person = JSON.parse(await this.xhr("/services/people/"+
 			// subjectIdentity, "GET", {"Accept": "application/json"}, "",
 			// "text"));
@@ -205,7 +213,6 @@
 
             const buttonElement = messageInputElement.querySelector("button");
             buttonElement.addEventListener("click", event => this.persistMessage(messageInputElement, subjectIdentity));
-			
 
             /*
 			 * const anchorElement = document.createElement("a");
@@ -222,7 +229,6 @@
         enumerable: false,
         configurable: false,
         value: async function (messageInputElement, subjectIdentity) {
-        	console.log("function persistMessage")
             const message = messageInputElement.querySelector("textarea").value;
             await this.xhr("/services/messages/?subjectReference="+subjectIdentity, "POST", {"Accept": "application/json"}, message, "text");
         
