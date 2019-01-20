@@ -36,8 +36,7 @@ import de.sb.toolbox.bind.JsonProtectedPropertyStrategy;
 
  */
 
-@Table(name = "Person", schema = "messenger")
-@Entity
+@Table(name = "Person", schema = "messenger") @Entity
 @PrimaryKeyJoinColumn(name = "personIdentity")
 @JsonbVisibility(JsonProtectedPropertyStrategy.class)
 @XmlRootElement

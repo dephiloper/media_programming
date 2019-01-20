@@ -33,9 +33,6 @@
 			const mainElement = document.querySelector("main");
 			mainElement.appendChild(document.querySelector("#login-template").content.cloneNode(true).firstElementChild);
 			mainElement.querySelector("button").addEventListener("click", event => this.login());
-
-			//TODO remove autologin
-			this.login();
 		}
 	});
 

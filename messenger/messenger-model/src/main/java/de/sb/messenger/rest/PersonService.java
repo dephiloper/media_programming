@@ -111,14 +111,14 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         if (personTemplate.getIdentity() != requesterIdentity && requester.getGroup() != Group.ADMIN) throw new ClientErrorException(FORBIDDEN);
 
         Person person = null;
-        if (personTemplate.getIdentity() != 0)
+        if (personTemplate.getIdentity() != 0) { // person exists
             person = entityManager.find(Person.class, personTemplate.getIdentity());
             if (person == null) throw new ClientErrorException(NOT_FOUND);
-        else {
-            person.generateCreationTimestampFromSystemTime();
+        } else { // create new person
             Document doc = entityManager.find(Document.class, 1L); // default avatar
             if (doc == null) throw new ServerErrorException(512);
-            person.setAvatar(doc);
+            person = new Person(doc);
+            person.generateCreationTimestampFromSystemTime();
         }
 
         person.setEmail(personTemplate.getEmail());
