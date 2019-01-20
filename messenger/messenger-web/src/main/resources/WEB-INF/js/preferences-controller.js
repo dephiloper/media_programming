@@ -135,20 +135,15 @@
 	 * Persists the session owner's avatar.
 	 * @param {File} avatarFile the avatar file
 	 */
+	 
 	Object.defineProperty(PreferencesController.prototype, "persistAvatar", {
 		enumerable: false,
 		configurable: false,
 		value: async function (avatarFile) {
 			const imageElement = document.querySelector("section.preferences img");
 			this.displayError();
-			// TODO: call PUT /services/people/{id}/avatar" to store the given avatar file, using
-			// either fetch() or Controller.xhr(). Throw an exception if the call fails. If it
-			// succeeds, increment the version of Controller.sessionOwner by 1. In case of an error,
-			// call this.displayError(error). In any case, alter the src-property of the imageElement
-			// to "/services/people/{id}/avatar?cache-bust=" + Date.now() in order to bypass the
-			// browser's image cache and display the modified image.
-
-			if (avatarFile.type !== 'image/gif' && avatarFile.type !== 'image/gif') throw new Error("HTTP 418 I'm a teapot");
+			
+			if (avatarFile.type !== 'image/gif' && avatarFile.type !== 'image/jpeg' && avatarFile.type !== 'image/png') throw new Error("File type is not supported!");
 
 			try {
 				await this.xhr("/services/people/" + Controller.sessionOwner.identity + "/avatar", "PUT", {"Content-Type": avatarFile.type}, avatarFile, "text");

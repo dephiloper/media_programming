@@ -12,3 +12,16 @@ gradlew.bat
 /.metadata/
 /messenger-test/bin
 /TheMaze/
+.project
+.recommenders/
+messenger/.project
+messenger/messenger-model/.classpath
+messenger/messenger-model/.project
+messenger/messenger-model/.settings/
+messenger/messenger-model/bin/
+messenger/messenger-test/.classpath
+messenger/messenger-test/.project
+messenger/messenger-test/.settings/
+messenger/messenger-web/.classpath
+messenger/messenger-web/.project
+messenger/messenger-web/.settings/

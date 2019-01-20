@@ -124,7 +124,10 @@ public class PersonService implements PersistenceManagerFactoryContainer {
         person.setEmail(personTemplate.getEmail());
         person.getName().setFamily(personTemplate.getName().getFamily());
         person.getName().setGiven(personTemplate.getName().getGiven());
-        // TODO: other parameters (not password)
+        person.getAddress().setStreet(personTemplate.getAddress().getStreet());
+        person.getAddress().setCity(personTemplate.getAddress().getCity());
+        person.getAddress().setPostcode(personTemplate.getAddress().getPostcode());
+        person.setGroup(personTemplate.getGroup());
 
         if (setPassword != null)
             person.setPasswordHash(HashTools.sha256HashCode(setPassword.getBytes(StandardCharsets.UTF_8)));

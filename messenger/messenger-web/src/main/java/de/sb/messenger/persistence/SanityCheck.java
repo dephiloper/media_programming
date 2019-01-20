@@ -9,7 +9,8 @@ public class SanityCheck {
 	public static void main (String[] args) {
 		EntityManagerFactory emf = Persistence.createEntityManagerFactory("messenger");
 		EntityManager em = emf.createEntityManager();
-		em.find(BaseEntity.class, 1L);
+		BaseEntity base = em.find(BaseEntity.class, 1L);
+		System.out.println(base.getMessagesCaused());
 	}
 
 }
