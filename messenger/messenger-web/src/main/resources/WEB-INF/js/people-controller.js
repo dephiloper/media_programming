@@ -53,6 +53,7 @@ function createResourceWithQueryParameters(resource, queryParameters) {
 				const mainElement = document.querySelector("main");
 				mainElement.appendChild(observingElement);
 				mainElement.appendChild(observedElement);
+				// TODO oben clonen
 				mainElement.appendChild(document.querySelector("#candidates-template").content.cloneNode(true).firstElementChild);
 				mainElement.querySelector("button").addEventListener("click", event => this.queryPeople());
 			} catch (error) {
@@ -80,15 +81,6 @@ function createResourceWithQueryParameters(resource, queryParameters) {
 				"city": inputElements[4].value.trim(),
 			}
 
-			let resource = createResourceWithQueryParameters("/services/people", queryParameters)
-
-			// query rest api
-			let people = JSON.parse(await this.xhr(resource, "GET", {"Accept": "application/json"}, "", "text"))
-			let peopleReferences = []
-			for (var key in people) {
-				peopleReferences.push(people[key].identity)
-			}
-
 			const mainElement = document.querySelector("main");
 
 			if (this.searchResult !== null && mainElement.hasChildNodes(this.searchResult)) {
@@ -96,13 +88,22 @@ function createResourceWithQueryParameters(resource, queryParameters) {
 			}
 
 			this.searchResult = document.querySelector("#people-observed-template").content.cloneNode(true).firstElementChild;
-			this.searchResult.getElementsByTagName("h1")[0].innerText = "Search Result"
-			this.searchResult.className = "search-results"
+			this.searchResult.querySelector("h1").appendChild(document.createTextNode("Search Result"));
+			this.searchResult.className = "search-results";
 
 			// show results
+			const resource = createResourceWithQueryParameters("/services/people", queryParameters);
+
+			// query rest api
+			// TODO xhr -> fetch
+			let people = JSON.parse(await this.xhr(resource, "GET", {"Accept": "application/json"}, "", "text"));
+			let peopleReferences = [];
+			for (var key in people) {
+				peopleReferences.push(people[key].identity);
+			}
 			this.refreshAvatarSlider(this.searchResult.querySelector("span.slider"), peopleReferences, person => this.toggleObservation(person.identity));
 
-			mainElement.appendChild(this.searchResult)
+			mainElement.appendChild(this.searchResult);
 		}
 	});
 
@@ -128,6 +129,7 @@ function createResourceWithQueryParameters(resource, queryParameters) {
 			}
 
 			// build content
+			// TODO use join or uri
 			let content = ""
 			for (let i in peopleObservedReferences) {
 				content += "peopleObserved=" + peopleObservedReferences[i] + "&"
@@ -142,6 +144,7 @@ function createResourceWithQueryParameters(resource, queryParameters) {
 			let response = await fetch(resource, {method: "PUT", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: content})
 			if (!response.ok) throw new Error("HTTP " + response.status + " " + response.statusText);
 
+			// TODO fetch
 			Controller.sessionOwner = JSON.parse(await this.xhr("/services/people/"+Controller.sessionOwner.identity, "GET", {"Accept": "application/json"}, "", "text"));
 
 			let html_people_observed = document.querySelector(".people-observed")

@@ -143,10 +143,14 @@
 			const imageElement = document.querySelector("section.preferences img");
 			this.displayError();
 			
-			if (avatarFile.type !== 'image/gif' && avatarFile.type !== 'image/jpeg' && avatarFile.type !== 'image/png') throw new Error("File type is not supported!");
-
 			try {
-				await this.xhr("/services/people/" + Controller.sessionOwner.identity + "/avatar", "PUT", {"Content-Type": avatarFile.type}, avatarFile, "text");
+				if (avatarFile.type !== 'image/gif' && avatarFile.type !== 'image/jpeg' && avatarFile.type !== 'image/png') throw new Error("File type is not supported!");
+
+				// TODO fetch
+				const uri = "/services/people/" + Controller.sessionOwner.identity + "/avatar";
+				let response = await fetch(uri, {method: "PUT", headers: {"Content-Type": avatarFile.type}, credentials: "include", body: avatarFile});
+				if (!response.ok) throw new Error(response.status + " " + response.statusText);
+
 				Controller.sessionOwner.version += 1;
 				imageElement.src = "/services/people/" + Controller.sessionOwner.identity + "/avatar?cache-bust=" + Date.now();
 			} catch (error) {
