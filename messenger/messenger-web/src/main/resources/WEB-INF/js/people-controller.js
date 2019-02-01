@@ -96,7 +96,8 @@ function createResourceWithQueryParameters(resource, queryParameters) {
 
 			// query rest api
 			// TODO xhr -> fetch
-			let people = JSON.parse(await this.xhr(resource, "GET", {"Accept": "application/json"}, "", "text"));
+			//let response = await fetch(resource, {method: "PUT", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: content})
+			let people = JSON.parse(await fetch(resource, {method: "GET", headers: {"Accept": "application/json"}, credentials: "include"}));
 			let peopleReferences = [];
 			for (var key in people) {
 				peopleReferences.push(people[key].identity);
@@ -145,7 +146,7 @@ function createResourceWithQueryParameters(resource, queryParameters) {
 			if (!response.ok) throw new Error("HTTP " + response.status + " " + response.statusText);
 
 			// TODO fetch
-			Controller.sessionOwner = JSON.parse(await this.xhr("/services/people/"+Controller.sessionOwner.identity, "GET", {"Accept": "application/json"}, "", "text"));
+			Controller.sessionOwner = JSON.parse(await fetch("/services/people/"+Controller.sessionOwner.identity, {method :"GET", headers: {"Accept": "application/json"}, credentials: "include"}));
 
 			let html_people_observed = document.querySelector(".people-observed")
 			let html_people_observing = document.querySelector(".people-observing")
