@@ -78,7 +78,9 @@
 				imageElement.src = "/services/people/" + message.authorReference + "/avatar";
 				imageElement.addEventListener("click", event => this.displayMessageEditor(messageOutputElement, message.identity));
 
-				const author = JSON.parse(await fetch("/services/people/" + message.authorReference, { method: "GET", headers: { "Accept": "application/json" }, credentials: "include" }));
+				const responseAuthor = await fetch("/services/people/" + message.authorReference, { method: "GET", headers: { "Accept": "application/json" }, credentials: "include" });
+				if (!responseAuthor.ok) throw new Error("HTTP " + responseAuthor.status + " " + responseAuthor.statusText);
+				const author = await responseAuthor.json();
 				messageOutputElement.querySelector("output.message-meta").innerHTML = author.email + " " + new Date(message.creationTimestamp).toLocaleString();
 				messageOutputElement.querySelector("output.message-body").innerText = message.body;
 
@@ -104,8 +106,9 @@
 			mainElement.appendChild(document.querySelector("#messages-template").content.cloneNode(true).firstElementChild);
 
 			const messageList = document.querySelector(".messages ul");
-			let messages = JSON.parse(await this.xhr("/services/messages/", "GET", { "Accept": "application/json" }, "", "text"));
-
+			const responseMessages = await fetch("/services/messages/", {methods: "GET", headers:{ "Accept": "application/json" }, credentials: "include"});
+			if (!responseMessages.ok) throw new Error("HTTP " + responseMessages.status + " " + responseMessages.statusText);
+			let messages = await responseMessages.json();
 			for (let message of messages) {
 				if (message.subjectReference !== Controller.sessionOwner.identity &&
 					Controller.sessionOwner.peopleObservedReferences.indexOf(message.subjectReference) < 0)
@@ -119,8 +122,10 @@
 				imageElement.addEventListener("click", event => this.displayMessageEditor(messageOutputElement, message.identity));
 
 				const responseAuthor = await fetch("/services/people/" + message.authorReference, { method: "GET", headers: { "Accept": "application/json" } });
+				if (!responseAuthor.ok) throw new Error("HTTP " + responseAuthor.status + " " + responseAuthor.statusText);
 				const author = await responseAuthor.json();
 				const responseMainSubject = await fetch("/services/people/" + message.subjectReference, { method: "GET", headers: { "Accept": "application/json" }, credentials: "include" });
+				if (!responseMainSubject.ok) throw new Error("HTTP " + responseMainSubject.status + " " + responseMainSubject.statusText);
 				const mainSubject = await responseMainSubject.json();
 				messageOutputElement.querySelector("output.message-meta").innerHTML = author.email + " " + new Date(message.creationTimestamp).toLocaleString() + " <b>to: " + mainSubject.name.given + " " + mainSubject.name.family + "</b>";
 				messageOutputElement.querySelector("output.message-body").innerText = message.body;
@@ -139,8 +144,10 @@
 				event.target.className = "message-minus";
 
 				// rest request
-				let messages = JSON.parse(await fetch("/services/entities/" + message.identity + "/messagesCaused", { method: "GET", headers: { "Accept": "application/json" }, credentials: "include" }))
-
+				const responseMessages = await fetch("/services/entities/" + message.identity + "/messagesCaused", { method: "GET", headers: { "Accept": "application/json" }, credentials: "include" });
+				if (!responseMessages.ok) throw new Error("HTTP " + responseMessages.status + " " + responseMessages.statusText);
+				let messages = await responseMessages.json();
+				
 				this.displayMessages(messageOutputElement, messages)
 			} else {
 				event.target.className = "message-plus";
@@ -187,8 +194,9 @@
 		configurable: false,
 		value: async function(messageInputElement, subjectIdentity) {
 			const message = messageInputElement.querySelector("textarea").value;
-			const newIdentity = await this.xhr("/services/messages/?subjectReference=" + subjectIdentity, "POST", { "Accept": "application/json" }, message, "text");
-
+			const responseIdentity = await fetch("/services/messages/?subjectReference=" + subjectIdentity, {method: "POST", headers: { "Accept": "application/json" }, body: message, credentials: "include"});
+			if (!responseIdentity.ok) throw new Error("HTTP " + responseIdentity.status + " " + responseIdentity.statusText);
+			const newIdentity = await responseIdentity.json();
 			const messageOutputElement = document.querySelector("#message-output-template").content.cloneNode(true).firstElementChild;
 			const parent = messageInputElement.parentNode;
 			parent.appendChild(messageOutputElement);
@@ -198,6 +206,7 @@
 			imageElement.addEventListener("click", event => this.displayMessageEditor(messageOutputElement, newIdentity));
 			messageOutputElement.querySelector("output.message-body").innerText = message;
 			const responseMainSubject = await fetch("/services/entities/" + subjectIdentity, { method: "GET", headers: { "Accept": "application/json" }, credentials: "include" });
+			if (!responseMainSubject.ok) throw new Error("HTTP " + responseMainSubject.status + " " + responseMainSubject.statusText);
 			const mainSubject = await responseMainSubject.json();
 			messageOutputElement.querySelector("output.message-meta").innerHTML = Controller.sessionOwner.email + " " + new Date(Date.now()).toLocaleString();
 
