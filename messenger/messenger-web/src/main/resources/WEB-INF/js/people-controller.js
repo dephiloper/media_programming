@@ -95,9 +95,9 @@ function createResourceWithQueryParameters(resource, queryParameters) {
 			const resource = createResourceWithQueryParameters("/services/people", queryParameters);
 
 			// query rest api
-			// TODO xhr -> fetch
-			//let response = await fetch(resource, {method: "PUT", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: content})
-			let people = JSON.parse(await fetch(resource, {method: "GET", headers: {"Accept": "application/json"}, credentials: "include"}));
+			let responsePeople = await fetch(resource, {method: "GET", headers: {"Accept": "application/json"}, credentials: "include"});
+			if (!responsePeople.ok) throw new Error("HTTP " + responsePeople.status + " " + responsePeople.statusText);
+			const people = await responsePeople.json();
 			let peopleReferences = [];
 			for (var key in people) {
 				peopleReferences.push(people[key].identity);
@@ -131,22 +131,20 @@ function createResourceWithQueryParameters(resource, queryParameters) {
 
 			// build content
 			// TODO use join or uri
-			let content = ""
+			let contentList = []
 			for (let i in peopleObservedReferences) {
-				content += "peopleObserved=" + peopleObservedReferences[i] + "&"
+				contentList.push("peopleObserved=" + peopleObservedReferences[i]);
 			}
-			// remove last '&'
-			if (content.length > 0) {
-				content = content.substring(0, content.length-1)
-			}
+			const content = contentList.join("&");
 
 			let resource = "/services/people/" + Controller.sessionOwner.identity + "/peopleObserved"
 
 			let response = await fetch(resource, {method: "PUT", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: content})
 			if (!response.ok) throw new Error("HTTP " + response.status + " " + response.statusText);
 
-			// TODO fetch
-			Controller.sessionOwner = JSON.parse(await fetch("/services/people/"+Controller.sessionOwner.identity, {method :"GET", headers: {"Accept": "application/json"}, credentials: "include"}));
+			const responseSessionOwner = Controller.sessionOwner = await fetch("/services/people/"+Controller.sessionOwner.identity, {method :"GET", headers: {"Accept": "application/json"}, credentials: "include"});
+			if (!responseSessionOwner.ok) throw new Error("HTTP " + responseSessionOwner.status + " " + responseSessionOwner.statusText);
+			Controller.sessionOwner = await responseSessionOwner.json();
 
 			let html_people_observed = document.querySelector(".people-observed")
 			let html_people_observing = document.querySelector(".people-observing")
