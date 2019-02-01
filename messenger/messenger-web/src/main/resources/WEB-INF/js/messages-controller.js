@@ -50,7 +50,7 @@
 		configurable: false,
 		value: async function(parentMessageOutputElement, messages) {
             /**
-            * TODO
+            *
                 Die Instanz-Methode displayMessages() soll gegebene Nachrichten als Kinder des
                 gegebenen DOM-Elements anzeigen. Ein Klick auf das Plus-Symbol neben dem AutorAvatar
                 einer Nachricht soll die Methode toggleChildMessages() aufrufen. Ein
