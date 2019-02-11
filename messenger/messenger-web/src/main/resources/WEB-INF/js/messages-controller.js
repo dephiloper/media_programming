@@ -30,7 +30,12 @@
 		writable: true,			//true if and only if the value associated with the property may be changed with an assignment operator.
 
 		value: function() {
-			if (!Controller.sessionOwner) return;
+			if (!Controller.sessionOwner) {
+				const anchor = document.querySelector("header li:nth-of-type(1) > a");
+				anchor.dispatchEvent(new MouseEvent("click"));
+				return;
+			}
+
 			this.displayError();
 			try {
 				const mainElement = document.querySelector("main");
@@ -106,6 +111,24 @@
 			mainElement.appendChild(document.querySelector("#messages-template").content.cloneNode(true).firstElementChild);
 
 			const messageList = document.querySelector(".messages ul");
+			// TODO: new messages above
+			/* TODO make site only show right messages
+
+				let responsePromises = [];
+			    personReferences = array of sessionOwnerId and sessionOwner.peopleObservedIds
+			    for (let personReference of personReferences) {
+				    responsePromises.push(fetch("/services/entities/" + personReference + "/messagesCaused"));
+				}
+				
+				let rootMessages = [];
+				for (let responsePromise of responsePromises) {
+					let response = await responsePromise;
+					if (!response.ok) continue;
+					const messages = await response.json();
+					rootMessages.push.apply(rootMessages, messages);
+				}
+				rootMessages.sort((l, r) => l.identity - r.identity);
+			*/
 			const responseMessages = await fetch("/services/messages/", {methods: "GET", headers:{ "Accept": "application/json" }, credentials: "include"});
 			if (!responseMessages.ok) throw new Error("HTTP " + responseMessages.status + " " + responseMessages.statusText);
 			let messages = await responseMessages.json();
@@ -144,6 +167,8 @@
 				event.target.className = "message-minus";
 
 				// rest request
+				// TODO uri auslagern
+				const uri = 
 				const responseMessages = await fetch("/services/entities/" + message.identity + "/messagesCaused", { method: "GET", headers: { "Accept": "application/json" }, credentials: "include" });
 				if (!responseMessages.ok) throw new Error("HTTP " + responseMessages.status + " " + responseMessages.statusText);
 				let messages = await responseMessages.json();
@@ -193,10 +218,12 @@
 		enumerable: false,
 		configurable: false,
 		value: async function(messageInputElement, subjectIdentity) {
-			const message = messageInputElement.querySelector("textarea").value;
-			const responseIdentity = await fetch("/services/messages/?subjectReference=" + subjectIdentity, {method: "POST", headers: { "Accept": "application/json" }, body: message, credentials: "include"});
-			if (!responseIdentity.ok) throw new Error("HTTP " + responseIdentity.status + " " + responseIdentity.statusText);
-			const newIdentity = await responseIdentity.json();
+			const messageBody = messageInputElement.querySelector("textarea").value;
+			// TODO uri auslagern überall
+			const createResponse = await fetch("/services/messages/?subjectReference=" + subjectIdentity, {method: "POST", headers: {"Content-Type": "text/plain"}, body: messageBody, credentials: "include"});
+			if (!createResponse.ok) throw new Error("HTTP " + createResponse.status + " " + createResponse.statusText);
+
+			const newIdentity = parseInt(await createResponse.text());
 			const messageOutputElement = document.querySelector("#message-output-template").content.cloneNode(true).firstElementChild;
 			const parent = messageInputElement.parentNode;
 			parent.appendChild(messageOutputElement);
@@ -204,11 +231,10 @@
 			const imageElement = messageOutputElement.querySelector("img");
 			imageElement.src = messageInputElement.querySelector("img").src;
 			imageElement.addEventListener("click", event => this.displayMessageEditor(messageOutputElement, newIdentity));
-			messageOutputElement.querySelector("output.message-body").innerText = message;
-			const responseMainSubject = await fetch("/services/entities/" + subjectIdentity, { method: "GET", headers: { "Accept": "application/json" }, credentials: "include" });
-			if (!responseMainSubject.ok) throw new Error("HTTP " + responseMainSubject.status + " " + responseMainSubject.statusText);
-			const mainSubject = await responseMainSubject.json();
-			messageOutputElement.querySelector("output.message-meta").innerHTML = Controller.sessionOwner.email + " " + new Date(Date.now()).toLocaleString();
+
+			// TODO innerText ersetzen mit outputElement/value
+			messageOutputElement.querySelector("output.message-body").value = message;
+			messageOutputElement.querySelector("output.message-meta").value = Controller.sessionOwner.email + " " + new Date(Date.now()).toLocaleString();
 
 			parent.removeChild(messageInputElement);
 			this.displayMessages(messageOutputElement, []);
