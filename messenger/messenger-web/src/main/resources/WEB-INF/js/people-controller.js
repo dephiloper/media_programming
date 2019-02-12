@@ -5,12 +5,12 @@
 "use strict";
 
 function createResourceWithQueryParameters(resource, queryParameters) {
-	var res = resource + "?"
+	var res = resource + "?";
 	Object.keys(queryParameters).forEach(function(paramName) {
-		if (queryParameters[paramName] != "") {
+		if (queryParameters[paramName] !== "") {
 			res = res + paramName + "=" + queryParameters[paramName] + "&";
 		}
-	})
+	});
 	return res.slice(0, -1) // remove last &
 }
 
@@ -18,17 +18,13 @@ function createResourceWithQueryParameters(resource, queryParameters) {
 	// imports
 	const Controller = de_sb_messenger.Controller;
 
-	// parameter names for person filter query
-	const QUERY_PARAMETER_NAMES = Object.freeze(["email", "givenName", "familyName", "street", "city"]);
-
-
 	/**
 	 * Creates a new people controller that is derived from an abstract controller.
 	 */
 	const PeopleController = function () {
 		Controller.call(this);
 		this.searchResult = null;
-	}
+	};
 	PeopleController.prototype = Object.create(Controller.prototype);
 	PeopleController.prototype.constructor = PeopleController;
 
@@ -53,7 +49,6 @@ function createResourceWithQueryParameters(resource, queryParameters) {
 				const mainElement = document.querySelector("main");
 				mainElement.appendChild(observingElement);
 				mainElement.appendChild(observedElement);
-				// TODO oben clonen
 				mainElement.appendChild(document.querySelector("#candidates-template").content.cloneNode(true).firstElementChild);
 				mainElement.querySelector("button").addEventListener("click", event => this.queryPeople());
 			} catch (error) {
@@ -72,36 +67,41 @@ function createResourceWithQueryParameters(resource, queryParameters) {
 		configurable: false,
 		value: async function () {
 			// Read Criteria Fields
-			const inputElements = document.querySelectorAll("section.candidates input")
+			const inputElements = document.querySelectorAll("section.candidates input");
 			let queryParameters = {
 				"email": inputElements[0].value.trim(),
 				"forename": inputElements[1].value.trim(),
 				"surname": inputElements[2].value.trim(),
 				"street": inputElements[3].value.trim(),
 				"city": inputElements[4].value.trim(),
-			}
+			};
 
 			const mainElement = document.querySelector("main");
 
-			if (this.searchResult !== null && mainElement.hasChildNodes(this.searchResult)) {
+			if (this.searchResult !== null && mainElement.contains(this.searchResult)) {
 				mainElement.removeChild(this.searchResult);
 			}
 
 			this.searchResult = document.querySelector("#people-observed-template").content.cloneNode(true).firstElementChild;
-			this.searchResult.querySelector("h1").appendChild(document.createTextNode("Search Result"));
+			this.searchResult.querySelector("h1").childNodes[0].nodeValue ="Search Result";
 			this.searchResult.className = "search-results";
 
 			// show results
 			const resource = createResourceWithQueryParameters("/services/people", queryParameters);
 
 			// query rest api
-			let responsePeople = await fetch(resource, {method: "GET", headers: {"Accept": "application/json"}, credentials: "include"});
+			let responsePeople = await fetch(resource, {
+				method: "GET",
+				headers: {"Accept": "application/json"},
+				credentials: "include"
+			});
 			if (!responsePeople.ok) throw new Error("HTTP " + responsePeople.status + " " + responsePeople.statusText);
 			const people = await responsePeople.json();
+
 			let peopleReferences = [];
-			for (var key in people) {
-				peopleReferences.push(people[key].identity);
-			}
+			for (const person of people)
+				peopleReferences.push(person.identity);
+
 			this.refreshAvatarSlider(this.searchResult.querySelector("span.slider"), peopleReferences, person => this.toggleObservation(person.identity));
 
 			mainElement.appendChild(this.searchResult);
@@ -118,36 +118,47 @@ function createResourceWithQueryParameters(resource, queryParameters) {
 		enumerable: false,
 		configurable: false,
 		value: async function (personIdentity) {
+			if (personIdentity === Controller.sessionOwner.identity) return; // prevents you from adding yourself
+
 			let peopleObservedReferences = Controller.sessionOwner.peopleObservedReferences;
 
 			if (!peopleObservedReferences.includes(personIdentity)) {
 				peopleObservedReferences.push(personIdentity)
 			} else {
-				var index = peopleObservedReferences.indexOf(personIdentity);
+				const index = peopleObservedReferences.indexOf(personIdentity);
 				if (index > -1) {
 					peopleObservedReferences.splice(index, 1);
 				}
 			}
 
 			// build content
-			// TODO use join or uri
-			let contentList = []
-			for (let i in peopleObservedReferences) {
-				contentList.push("peopleObserved=" + peopleObservedReferences[i]);
+			let contentList = [];
+			for (let peopleObservedReference of peopleObservedReferences) {
+				contentList.push("peopleObserved=" + peopleObservedReference);
 			}
 			const content = contentList.join("&");
 
-			let resource = "/services/people/" + Controller.sessionOwner.identity + "/peopleObserved"
+			let resource = "/services/people/" + Controller.sessionOwner.identity + "/peopleObserved";
 
-			let response = await fetch(resource, {method: "PUT", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: content})
+			let response = await fetch(resource, {
+				method: "PUT",
+				headers: {"Content-Type": "application/x-www-form-urlencoded"},
+				body: content
+			});
 			if (!response.ok) throw new Error("HTTP " + response.status + " " + response.statusText);
 
-			const responseSessionOwner = Controller.sessionOwner = await fetch("/services/people/"+Controller.sessionOwner.identity, {method :"GET", headers: {"Accept": "application/json"}, credentials: "include"});
+			const uri = "/services/people/"+Controller.sessionOwner.identity;
+			const responseSessionOwner = Controller.sessionOwner = await fetch(uri,{
+				method :"GET",
+				headers: {"Accept": "application/json"},
+				credentials: "include"
+			});
+
 			if (!responseSessionOwner.ok) throw new Error("HTTP " + responseSessionOwner.status + " " + responseSessionOwner.statusText);
 			Controller.sessionOwner = await responseSessionOwner.json();
 
-			let html_people_observed = document.querySelector(".people-observed")
-			let html_people_observing = document.querySelector(".people-observing")
+			let html_people_observed = document.querySelector(".people-observed");
+			let html_people_observing = document.querySelector(".people-observing");
 			this.refreshAvatarSlider(html_people_observing.querySelector("span.slider"), Controller.sessionOwner.peopleObservingReferences, person => this.toggleObservation(person.identity));
 			this.refreshAvatarSlider(html_people_observed.querySelector("span.slider"), Controller.sessionOwner.peopleObservedReferences, person => this.toggleObservation(person.identity));
 		}
