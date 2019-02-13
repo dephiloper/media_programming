@@ -72,7 +72,7 @@
                 const author = await responseAuthor.json();
                 messageOutputElement.querySelector("output.message-meta").value = author.email + " " + new Date(message.creationTimestamp).toLocaleString();
                 messageOutputElement.querySelector("output.message-body").value = message.body;
-                messageOutputElement.querySelector(".message-plus").addEventListener("click", event => this.toggleChildMessages(event, message, messageOutputElement));
+                messageOutputElement.querySelector(".message-plus").addEventListener("click", event => this.toggleChildMessages(event, message.identity, messageOutputElement));
             }
         }
     });
@@ -128,7 +128,7 @@
 
                 messageOutputElement.querySelector("output.message-meta").value = author.email + " " + new Date(message.creationTimestamp).toLocaleString();
                 messageOutputElement.querySelector("output.message-body").value = message.body;
-                messageOutputElement.querySelector(".message-plus").addEventListener("click", event => this.toggleChildMessages(event, message, messageOutputElement));
+                messageOutputElement.querySelector(".message-plus").addEventListener("click", event => this.toggleChildMessages(event, message.identity, messageOutputElement));
             }
         }
     });
@@ -136,26 +136,27 @@
     Object.defineProperty(MessagesController.prototype, "toggleChildMessages", {
         enumerable: false,
         configurable: false,
-        value: async function (event, message, messageOutputElement) {
+        value: async function (event, message_identity, messageOutputElement) {
             if (event.target.className === "message-plus") {
                 event.target.className = "message-minus";
                 messageOutputElement.classList.add("expanded");
 
-                const uri = "/services/entities/" + message.identity + "/messagesCaused";
-                let response;
-                try { // TODO inspect this part --> try it w/o try-catch
-                    response = await fetch(uri, {
-                        method: "GET",
-                        headers: {"Accept": "application/json"},
-                        credentials: "include"
-                    });
+                const uri = "/services/entities/" + message_identity + "/messagesCaused";
+                // try { // TODO inspect this part --> try it w/o try-catch
+                const response = await fetch(uri, {
+                    method: "GET",
+                    headers: {"Accept": "application/json"},
+                    credentials: "include"
+                });
+                /*
                 } catch (e) {
                     return;
                 }
+                */
                 if (!response.ok) throw new Error("HTTP " + response.status + " " + response.statusText);
                 let messages = await response.json();
 
-                this.displayMessages(messageOutputElement, messages)
+                this.displayMessages(messageOutputElement, messages);
             } else {
                 event.target.className = "message-plus";
                 messageOutputElement.classList.remove("expanded");
@@ -222,6 +223,7 @@
 
             messageOutputElement.querySelector("output.message-body").value = messageBody;
             messageOutputElement.querySelector("output.message-meta").value = Controller.sessionOwner.email + " " + new Date(Date.now()).toLocaleString();
+            messageOutputElement.querySelector(".message-plus").addEventListener("click", event => this.toggleChildMessages(event, newIdentity, messageOutputElement));
 
             parent.removeChild(messageInputElement);
             this.displayMessages(messageOutputElement, []);
