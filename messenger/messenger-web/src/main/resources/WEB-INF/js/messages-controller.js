@@ -139,6 +139,7 @@
         enumerable: false,
         configurable: false,
         value: async function (event_target, message_identity, messageOutputElement) {
+
             if (event_target.className === "message-plus") {
                 event_target.className = "message-minus";
                 messageOutputElement.classList.add("expanded");
@@ -196,25 +197,34 @@
             imageElement.src = "/services/people/" + Controller.sessionOwner.identity + "/avatar";
 
             const buttonElement = messageInputElement.querySelector("button");
-            buttonElement.addEventListener("click", event => this.persistMessage(messageInputElement, subjectIdentity));
+            buttonElement.addEventListener("click", event => this.persistMessageAndExpand(messageInputElement, subjectIdentity));
         }
     });
 
-    Object.defineProperty(MessagesController.prototype, "displayMessageEditorAndExpand", {
+    Object.defineProperty(MessagesController.prototype, "persistMessageAndExpand", {
         enumerable: false,
         configurable: false,
-        value: async function (parentElement, subjectIdentity, event_target, message_identity, messageOutputElement) {
-            console.log("expand");
-            this.toggleChildMessages(event_target, message_identity, messageOutputElement);
-            this.displayMessageEditor(parentElement, subjectIdentity);
-        }
+        value: async function (messageInputElement, subjectIdentity) {
+            this.persistMessage(messageInputElement, subjectIdentity);
 
+            const parent = messageInputElement.parentElement.parentElement;
+
+            if (parent.className == "message") {
+                const plus_elem = parent.querySelector(".message-plus")
+                if (plus_elem) {
+                    const messageIdentity = subjectIdentity;
+                    const outputElement = parent;
+                    this.toggleChildMessages(plus_elem, messageIdentity, outputElement);
+                }
+            }
+        }
     });
 
     Object.defineProperty(MessagesController.prototype, "persistMessage", {
         enumerable: false,
         configurable: false,
         value: async function (messageInputElement, subjectIdentity) {
+            const parent = messageInputElement.parentNode;
             const messageBody = messageInputElement.querySelector("textarea").value;
             const uri = "/services/messages/?subjectReference=" + subjectIdentity;
             const createResponse = await fetch(uri, {
@@ -227,20 +237,21 @@
 
             const newIdentity = parseInt(await createResponse.text());
             const messageOutputElement = document.querySelector("#message-output-template").content.cloneNode(true).firstElementChild;
-            const parent = messageInputElement.parentNode;
             parent.appendChild(messageOutputElement);
 
             const message_plus = messageOutputElement.querySelector(".message-plus");
 
             const imageElement = messageOutputElement.querySelector("img");
             imageElement.src = messageInputElement.querySelector("img").src;
-            imageElement.addEventListener("click", () => this.displayMessageEditorAndExpand(messageOutputElement, newIdentity, message_plus, subjectIdentity, messageOutputElement));
+            imageElement.addEventListener("click", () => this.displayMessageEditor(messageOutputElement, newIdentity));
 
             messageOutputElement.querySelector("output.message-body").value = messageBody;
             messageOutputElement.querySelector("output.message-meta").value = Controller.sessionOwner.email + " " + new Date(Date.now()).toLocaleString();
             message_plus.addEventListener("click", event => this.toggleChildMessages(event.target, newIdentity, messageOutputElement));
 
-            parent.removeChild(messageInputElement);
+            if (messageInputElement.parentNode != null) {
+                parent.removeChild(messageInputElement);
+            }
             this.displayMessages(messageOutputElement, []);
         }
     });
