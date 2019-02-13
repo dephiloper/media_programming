@@ -36,7 +36,9 @@
                 mainElement.appendChild(subjectsElement);
                 this.displayRootMessages();
                 const messageBox = document.querySelector(".messages");
-                this.refreshAvatarSlider(subjectsElement.querySelector("span.slider"), Controller.sessionOwner.peopleObservedReferences, person => this.displayMessageEditor(messageBox, person.identity));
+                this.refreshAvatarSlider(subjectsElement.querySelector("span.slider"),
+                                         Controller.sessionOwner.peopleObservedReferences,
+                                         person => this.displayMessageEditor(messageBox, person.identity));
             } catch (error) {
                 this.displayError(error);
             }
@@ -72,7 +74,7 @@
                 const author = await responseAuthor.json();
                 messageOutputElement.querySelector("output.message-meta").value = author.email + " " + new Date(message.creationTimestamp).toLocaleString();
                 messageOutputElement.querySelector("output.message-body").value = message.body;
-                messageOutputElement.querySelector(".message-plus").addEventListener("click", event => this.toggleChildMessages(event, message.identity, messageOutputElement));
+                messageOutputElement.querySelector(".message-plus").addEventListener("click", event => this.toggleChildMessages(event.target, message.identity, messageOutputElement));
             }
         }
     });
@@ -128,7 +130,7 @@
 
                 messageOutputElement.querySelector("output.message-meta").value = author.email + " " + new Date(message.creationTimestamp).toLocaleString();
                 messageOutputElement.querySelector("output.message-body").value = message.body;
-                messageOutputElement.querySelector(".message-plus").addEventListener("click", event => this.toggleChildMessages(event, message.identity, messageOutputElement));
+                messageOutputElement.querySelector(".message-plus").addEventListener("click", event => this.toggleChildMessages(event.target, message.identity, messageOutputElement));
             }
         }
     });
@@ -136,9 +138,9 @@
     Object.defineProperty(MessagesController.prototype, "toggleChildMessages", {
         enumerable: false,
         configurable: false,
-        value: async function (event, message_identity, messageOutputElement) {
-            if (event.target.className === "message-plus") {
-                event.target.className = "message-minus";
+        value: async function (event_target, message_identity, messageOutputElement) {
+            if (event_target.className === "message-plus") {
+                event_target.className = "message-minus";
                 messageOutputElement.classList.add("expanded");
 
                 const uri = "/services/entities/" + message_identity + "/messagesCaused";
@@ -158,7 +160,7 @@
 
                 this.displayMessages(messageOutputElement, messages);
             } else {
-                event.target.className = "message-plus";
+                event_target.className = "message-plus";
                 messageOutputElement.classList.remove("expanded");
                 this.displayMessages(messageOutputElement, [])
             }
@@ -198,6 +200,17 @@
         }
     });
 
+    Object.defineProperty(MessagesController.prototype, "displayMessageEditorAndExpand", {
+        enumerable: false,
+        configurable: false,
+        value: async function (parentElement, subjectIdentity, event_target, message_identity, messageOutputElement) {
+            console.log("expand");
+            this.toggleChildMessages(event_target, message_identity, messageOutputElement);
+            this.displayMessageEditor(parentElement, subjectIdentity);
+        }
+
+    });
+
     Object.defineProperty(MessagesController.prototype, "persistMessage", {
         enumerable: false,
         configurable: false,
@@ -217,13 +230,15 @@
             const parent = messageInputElement.parentNode;
             parent.appendChild(messageOutputElement);
 
+            const message_plus = messageOutputElement.querySelector(".message-plus");
+
             const imageElement = messageOutputElement.querySelector("img");
             imageElement.src = messageInputElement.querySelector("img").src;
-            imageElement.addEventListener("click", () => this.displayMessageEditor(messageOutputElement, newIdentity));
+            imageElement.addEventListener("click", () => this.displayMessageEditorAndExpand(messageOutputElement, newIdentity, message_plus, subjectIdentity, messageOutputElement));
 
             messageOutputElement.querySelector("output.message-body").value = messageBody;
             messageOutputElement.querySelector("output.message-meta").value = Controller.sessionOwner.email + " " + new Date(Date.now()).toLocaleString();
-            messageOutputElement.querySelector(".message-plus").addEventListener("click", event => this.toggleChildMessages(event, newIdentity, messageOutputElement));
+            message_plus.addEventListener("click", event => this.toggleChildMessages(event.target, newIdentity, messageOutputElement));
 
             parent.removeChild(messageInputElement);
             this.displayMessages(messageOutputElement, []);
